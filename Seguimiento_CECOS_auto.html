@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento CECOs · Konecta (Live)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ============================================================
+   ESTILOS - Copia exactamente los que ya tienes
+   ============================================================ */
+:root{
+  --navy:#0c2547;
+  --navy-2:#13325c;
+  --blue:#185fa5;
+  --blue-light:#378ADD;
+  --yellow:#f2b705;
+  --yellow-dark:#c98e00;
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --border:#e3e7ee;
+  --border-strong:#cdd4df;
+  --text:#16233a;
+  --text-secondary:#5a6678;
+  --text-muted:#8993a3;
+  --green:#1d9e75;
+  --green-bg:#e1f5ee;
+  --red:#d04848;
+  --red-bg:#fbeaea;
+  --amber:#c98500;
+  --amber-bg:#fdf2dd;
+  --radius:10px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+.topbar{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+  color:#fff;
+  padding:20px 32px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+}
+.brand{display:flex;align-items:center;gap:14px;}
+.brand-mark{
+  width:38px;height:38px;border-radius:8px;
+  background:var(--yellow);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:var(--navy);font-size:17px;
+}
+.brand-text h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.2px;}
+.brand-text p{margin:0;font-size:12.5px;color:#b9c6dc;}
+.topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.btn{
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  padding:9px 16px;
+  border-radius:8px;
+  font-size:13.5px;
+  font-weight:500;
+  cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  transition:background .15s ease;
+}
+.btn:hover{background:rgba(255,255,255,.18);}
+.btn-primary{
+  background:var(--yellow);
+  color:var(--navy);
+  border-color:var(--yellow);
+  font-weight:700;
+}
+.btn-primary:hover{background:var(--yellow-dark);}
+.btn-light{
+  background:#fff;color:var(--navy);border-color:#fff;font-weight:600;
+}
+.btn-light:hover{background:#eef1f6;}
+.container{max-width:1320px;margin:0 auto;padding:24px 32px 60px;}
+.filters{
+  display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px 18px;
+  margin-bottom:20px;
+}
+.filters label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px;}
+.filters select, .filters input[type=text]{
+  font-family:var(--font);
+  font-size:13.5px;
+  padding:8px 10px;
+  border:1px solid var(--border-strong);
+  border-radius:7px;
+  background:#fff;
+  color:var(--text);
+  min-width:160px;
+}
+.filters .field{display:flex;flex-direction:column;}
+.filters .spacer{flex:1;}
+.filters .reset{
+  font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;
+  padding:8px 4px;
+}
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;
+  margin-bottom:24px;
+}
+.kpi{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  position:relative;
+  overflow:hidden;
+}
+.kpi::before{
+  content:"";
+  position:absolute;top:0;left:0;width:4px;height:100%;
+  background:var(--blue);
+}
+.kpi.accent-yellow::before{background:var(--yellow);}
+.kpi.accent-green::before{background:var(--green);}
+.kpi.accent-red::before{background:var(--red);}
+.kpi-label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;}
+.kpi-value{font-size:24px;font-weight:700;color:var(--navy);letter-spacing:-.3px;}
+.kpi-sub{font-size:12px;color:var(--text-secondary);margin-top:4px;}
+.panel{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-bottom:22px;
+  overflow:hidden;
+}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:10px;
+}
+.panel-header h2{margin:0;font-size:15px;font-weight:600;color:var(--navy);}
+.panel-header .hint{font-size:12px;color:var(--text-muted);}
+.panel-body{padding:18px 20px;}
+.charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
+@media(max-width:900px){.charts-row{grid-template-columns:1fr;}}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  text-align:left;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+  color:var(--text-muted);
+  font-weight:700;
+  padding:10px 12px;
+  border-bottom:2px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  color:var(--text);
+  white-space:nowrap;
+}
+tbody tr:hover{background:#f8fafc;}
+.num{text-align:right;font-variant-numeric:tabular-nums;}
+.badge{
+  font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;
+}
+.badge-activo{background:var(--green-bg);color:var(--green);}
+.badge-negociacion{background:var(--amber-bg);color:var(--amber);}
+.badge-cerrado{background:#eef0f3;color:var(--text-secondary);}
+.bar-track{width:100px;height:6px;background:#eef1f5;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
+.bar-fill{height:100%;background:var(--blue);}
+.bar-fill.over{background:var(--green);}
+.row-edit-btn{
+  border:1px solid var(--border-strong);background:#fff;color:var(--blue);
+  font-size:11.5px;padding:4px 9px;border-radius:6px;cursor:pointer;font-weight:600;
+}
+.row-edit-btn:hover{background:#f0f5fb;}
+.dropzone{
+  border:2px dashed var(--border-strong);
+  border-radius:14px;
+  padding:50px 20px;
+  text-align:center;
+  background:#fbfcfe;
+  transition:border-color .15s, background .15s;
+  cursor:pointer;
+}
+.dropzone.dragover{border-color:var(--blue);background:#eef5fc;}
+.dropzone h3{color:var(--navy);margin:14px 0 6px;font-size:16px;}
+.dropzone p{color:var(--text-muted);font-size:13px;margin:0 0 18px;}
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(12,37,71,.45);
+  display:flex;align-items:center;justify-content:center;z-index:100;
+  padding:20px;
+}
+.modal{
+  background:#fff;border-radius:12px;max-width:480px;width:100%;
+  padding:24px;max-height:85vh;overflow-y:auto;
+}
+.modal h3{margin:0 0 16px;color:var(--navy);font-size:16px;}
+.modal .field{margin-bottom:12px;}
+.modal label{font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;}
+.modal input, .modal select{
+  width:100%;padding:9px 10px;border:1px solid var(--border-strong);border-radius:7px;
+  font-family:var(--font);font-size:13.5px;
+}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+.btn-secondary{
+  border:1px solid var(--border-strong);background:#fff;color:var(--text);
+  padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
+}
+.btn-secondary:hover{background:#f4f6f9;}
+.btn-save{
+  border:1px solid var(--blue);background:var(--blue);color:#fff;
+  padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
+}
+.btn-save:hover{background:var(--navy);}
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--navy);color:#fff;padding:11px 20px;border-radius:8px;
+  font-size:13.5px;font-weight:500;z-index:200;
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+  display:none;
+}
+.legend-row{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin-bottom:10px;}
+.legend-row span{display:flex;align-items:center;gap:6px;}
+.legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">K</div>
+    <div class="brand-text">
+      <h1>Seguimiento económico de CECOs</h1>
+      <p id="periodLabel">Ejercicio 2026 · Datos desde Google Sheets</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-light" id="refreshBtn" onclick="refreshData()">🔄 Actualizar datos</button>
+    <span id="lastUpdate" style="font-size:12px;color:rgba(255,255,255,0.7);margin-right:8px;"></span>
+  </div>
+</div>
+
+<div class="container" id="container">
+  <div id="loadingState" class="dropzone" style="display:block;">
+    <div style="font-size:32px;">⏳</div>
+    <h3>Cargando datos desde Google Sheets...</h3>
+    <p>Por favor espera mientras se sincronizan los datos del dashboard</p>
+    <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
+      <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
+    </div>
+  </div>
+
+  <div id="mainContent" style="display:none;">
+    <div class="filters">
+      <div class="field">
+        <label>Cliente</label>
+        <select id="filterCliente"><option value="">Todos</option></select>
+      </div>
+      <div class="field">
+        <label>Unidad de negocio</label>
+        <select id="filterUnidad"><option value="">Todas</option></select>
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <select id="filterEstado"><option value="">Todos</option></select>
+      </div>
+      <div class="spacer"></div>
+      <button class="reset" id="resetFilters">Limpiar filtros</button>
+    </div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="charts-row">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Real vs previsto · evolución mensual</h2>
+          <span class="hint">Suma de todos los CECOs filtrados</span>
+        </div>
+        <div class="panel-body">
+          <div class="legend-row">
+            <span><span class="legend-dot" style="background:#185fa5"></span>Real</span>
+            <span><span class="legend-dot" style="background:#f2b705"></span>Previsto</span>
+          </div>
+          <div style="position:relative;height:260px;">
+            <canvas id="chartEvolucion" role="img" aria-label="Evolución mensual de ingresos reales frente a previstos"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Reparto de ingresos por CECO</h2>
+        </div>
+        <div class="panel-body">
+          <div style="position:relative;height:260px;">
+            <canvas id="chartReparto" role="img" aria-label="Reparto de ingresos por CECO"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Detalle por CECO</h2>
+        <span class="hint" id="tableCount"></span>
+      </div>
+      <div class="panel-body" style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Proyecto</th>
+              <th>Cliente</th>
+              <th>Unidad</th>
+              <th>Estado</th>
+              <th class="num">Presupuesto</th>
+              <th class="num">Real facturado</th>
+              <th>Avance</th>
+              <th class="num">Margen</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cecoTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// 1. CONFIGURACIÓN - REEMPLAZA CON TUS URLs DE GOOGLE SHEETS
+// ============================================================
+const CONFIG = {
+  // ⚠️ IMPORTANTE: Reemplaza estas URLs con las que obtengas al publicar tu archivo
+  URLs: {
+    maestro: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLqtwKmqanpct3b6gmXurOD8CBhuqxAuKG6Mjiobk26Wm_uDZ_T10VbPsbZqRlDg/pub?gid=573468591&single=true&output=csv',
+    ingresos: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLqtwKmqanpct3b6gmXurOD8CBhuqxAuKG6Mjiobk26Wm_uDZ_T10VbPsbZqRlDg/pub?gid=74750691&single=true&output=csv',
+    forecast: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLqtwKmqanpct3b6gmXurOD8CBhuqxAuKG6Mjiobk26Wm_uDZ_T10VbPsbZqRlDg/pub?gid=74750691&single=true&output=csv'
+  }
+};
+
+// ============================================================
+// 2. ESTADO DE LA APLICACIÓN
+// ============================================================
+let state = { maestro: [], ingresos: [], forecast: [] };
+let charts = {};
+let isLoading = false;
+
+// ============================================================
+// 3. FUNCIONES DE CARGA DESDE GOOGLE SHEETS
+// ============================================================
+function parseCSVRow(row, headers) {
+  const obj = {};
+  headers.forEach((header, index) => {
+    let value = row[index] || '';
+    if (!isNaN(value) && value !== '') {
+      obj[header] = Number(value);
+    } else {
+      obj[header] = value;
+    }
+  });
+  return obj;
+}
+
+async function fetchCSV(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+  const text = await response.text();
+  const lines = text.split('\n').filter(line => line.trim() !== '');
+  if (lines.length < 2) return [];
+  
+  const separator = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+  
+  const data = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(separator).map(v => v.trim().replace(/^"|"$/g, ''));
+    if (values.length >= headers.length) {
+      data.push(parseCSVRow(values, headers));
+    }
+  }
+  return data;
+}
+
+function parseDateFromCSV(dateStr) {
+  if (!dateStr) return '';
+  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return match[0];
+  return dateStr;
+}
+
+function transformMaestroData(raw) {
+  return raw
+    .filter(r => r['Código CECO'] && String(r['Código CECO']).trim())
+    .map(r => ({
+      codigo: String(r['Código CECO']).trim(),
+      proyecto: r['Nombre Proyecto'] || '',
+      cliente: r['Cliente'] || '',
+      unidad: r['Unidad de Negocio'] || '',
+      responsable: r['Responsable'] || '',
+      fechaInicio: parseDateFromCSV(r['Fecha Inicio']),
+      fechaFin: parseDateFromCSV(r['Fecha Fin Prevista']),
+      estado: r['Estado'] || 'Activo',
+      presupuestoIngresos: Number(r['Presupuesto Ingresos Total (€)']) || 0,
+      presupuestoCostes: Number(r['Presupuesto Costes Total (€)']) || 0,
+      notas: r['Notas'] || ''
+    }));
+}
+
+function transformIngresosData(raw) {
+  return raw
+    .filter(r => r['Código CECO'] && String(r['Código CECO']).trim() && r['Importe (€)'] && r['Importe (€)'] !== '')
+    .map(r => ({
+      codigo: String(r['Código CECO']).trim(),
+      fecha: parseDateFromCSV(r['Fecha']),
+      mes: r['Mes'] || '',
+      anio: Number(r['Año']) || 2026,
+      tipo: r['Tipo de Ingreso'] || '',
+      concepto: r['Concepto / Descripción'] || '',
+      importe: Number(r['Importe (€)']) || 0,
+      factura: r['Nº Factura/Ref.'] || '',
+      estadoCobro: r['Estado Cobro/Pago'] || ''
+    }));
+}
+
+function transformForecastData(raw) {
+  const forecastMap = {};
+  raw.forEach(row => {
+    const codigo = String(row['Código CECO'] || '').trim();
+    if (!codigo) return;
+    const total = Number(row['Total Año']) || 0;
+    forecastMap[codigo] = total;
+  });
+  return forecastMap;
+}
+
+async function loadAllData() {
+  if (isLoading) return;
+  isLoading = true;
+  const loadingBar = document.getElementById('loadingBar');
+  
+  try {
+    loadingBar.style.width = '10%';
+    const rawMaestro = await fetchCSV(CONFIG.URLs.maestro);
+    loadingBar.style.width = '40%';
+    state.maestro = transformMaestroData(rawMaestro);
+    
+    const rawIngresos = await fetchCSV(CONFIG.URLs.ingresos);
+    loadingBar.style.width = '70%';
+    state.ingresos = transformIngresosData(rawIngresos);
+    
+    if (CONFIG.URLs.forecast) {
+      const rawForecast = await fetchCSV(CONFIG.URLs.forecast);
+      state.forecast = transformForecastData(rawForecast);
+    }
+    loadingBar.style.width = '100%';
+    
+    if (state.maestro.length === 0) {
+      throw new Error('No se encontraron CECOs. Verifica que el archivo esté publicado y la hoja Maestro_CECOs tenga datos.');
+    }
+    
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    
+    populateFilterOptions();
+    render();
+    
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = 
+      `Última actualización: ${now.toLocaleTimeString()}`;
+    showToast(`✅ Datos cargados: ${state.maestro.length} CECOs, ${state.ingresos.length} ingresos`);
+    
+  } catch (error) {
+    console.error('Error:', error);
+    showToast(`❌ Error: ${error.message}`);
+    document.getElementById('loadingState').innerHTML = `
+      <div style="font-size:32px;">⚠️</div>
+      <h3>Error al cargar los datos</h3>
+      <p>${error.message}</p>
+      <button class="btn btn-primary" onclick="refreshData()">Reintentar</button>
+    `;
+  } finally {
+    isLoading = false;
+  }
+}
+
+function refreshData() {
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('loadingState').innerHTML = `
+    <div style="font-size:32px;">🔄</div>
+    <h3>Recargando datos desde Google Sheets...</h3>
+    <p>Actualizando el dashboard</p>
+    <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
+      <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
+    </div>
+  `;
+  document.getElementById('mainContent').style.display = 'none';
+  Object.keys(charts).forEach(key => {
+    if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+  });
+  loadAllData();
+}
+
+// ============================================================
+// 4. FUNCIONES DEL DASHBOARD
+// ============================================================
+function getFilteredMaestro(){
+  const cliente = document.getElementById('filterCliente').value;
+  const unidad = document.getElementById('filterUnidad').value;
+  const estado = document.getElementById('filterEstado').value;
+  return state.maestro.filter(m=>{
+    if(cliente && m.cliente !== cliente) return false;
+    if(unidad && m.unidad !== unidad) return false;
+    if(estado && m.estado !== estado) return false;
+    return true;
+  });
+}
+
+function ingresosFor(codigo){
+  return state.ingresos.filter(i=>i.codigo === codigo);
+}
+
+function totalIngresos(codigo){
+  return ingresosFor(codigo).reduce((s,i)=>s+i.importe,0);
+}
+
+function populateFilterOptions(){
+  const clientes = [...new Set(state.maestro.map(m=>m.cliente).filter(Boolean))].sort();
+  const unidades = [...new Set(state.maestro.map(m=>m.unidad).filter(Boolean))].sort();
+  const estados = [...new Set(state.maestro.map(m=>m.estado).filter(Boolean))].sort();
+  fillSelect('filterCliente', clientes);
+  fillSelect('filterUnidad', unidades);
+  fillSelect('filterEstado', estados);
+}
+
+function fillSelect(id, values){
+  const sel = document.getElementById(id);
+  const allLabel = sel.options[0].textContent;
+  sel.innerHTML = `<option value="">${allLabel}</option>` + values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtEUR(n){
+  return new Intl.NumberFormat('es-ES', {style:'currency', currency:'EUR', maximumFractionDigits:0}).format(n||0);
+}
+
+function fmtPct(n){
+  return new Intl.NumberFormat('es-ES', {style:'percent', maximumFractionDigits:1}).format(n||0);
+}
+
+function statusBadgeClass(estado){
+  const e = (estado||'').toLowerCase();
+  if(e.includes('negocia')) return 'badge-negociacion';
+  if(e.includes('cerrado')) return 'badge-cerrado';
+  return 'badge-activo';
+}
+
+function render(){
+  const filtered = getFilteredMaestro();
+  renderKpis(filtered);
+  renderTable(filtered);
+  renderEvolucionChart(filtered);
+  renderRepartoChart(filtered);
+}
+
+function renderKpis(filtered){
+  const totalIngresosSum = filtered.reduce((s,m)=>s+totalIngresos(m.codigo),0);
+  const totalPresupuesto = filtered.reduce((s,m)=>s+m.presupuestoIngresos,0);
+  const activos = filtered.filter(m=>(m.estado||'').toLowerCase().includes('activo')).length;
+  const pctAvance = totalPresupuesto > 0 ? totalIngresosSum/totalPresupuesto : null;
+
+  const kpis = [
+    {label:'Ingresos facturados', value: fmtEUR(totalIngresosSum), accent:'', sub: filtered.length + ' CECOs en vista'},
+    {label:'Presupuesto total', value: fmtEUR(totalPresupuesto), accent:'accent-yellow', sub: totalPresupuesto ? '' : 'Sin presupuesto cargado'},
+    {label:'% avance s/presupuesto', value: pctAvance!==null ? fmtPct(pctAvance) : '—', accent: pctAvance!==null && pctAvance>=1 ? 'accent-green' : '', sub: 'Solo CECOs con presupuesto'},
+    {label:'CECOs activos', value: activos, accent:'accent-green', sub: filtered.length + ' totales en filtro'}
+  ];
+
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.accent}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderTable(filtered){
+  document.getElementById('tableCount').textContent = filtered.length + (filtered.length===1?' proyecto':' proyectos');
+  const tbody = document.getElementById('cecoTableBody');
+  if(filtered.length===0){
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px;">No hay CECOs que coincidan con los filtros.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(m=>{
+    const real = totalIngresos(m.codigo);
+    const pct = m.presupuestoIngresos > 0 ? Math.min(real/m.presupuestoIngresos,1) : null;
+    const margen = m.presupuestoIngresos > 0 ? (real - m.presupuestoCostes*(real/m.presupuestoIngresos)) : real;
+    return `
+    <tr>
+      <td><strong>${escapeHtml(m.codigo)}</strong></td>
+      <td>${escapeHtml(m.proyecto)}</td>
+      <td>${escapeHtml(m.cliente)}</td>
+      <td>${escapeHtml(m.unidad)}</td>
+      <td><span class="badge ${statusBadgeClass(m.estado)}">${escapeHtml(m.estado)}</span></td>
+      <td class="num">${m.presupuestoIngresos ? fmtEUR(m.presupuestoIngresos) : '—'}</td>
+      <td class="num">${fmtEUR(real)}</td>
+      <td>${pct!==null ? `<span class="bar-track"><span class="bar-fill ${pct>=1?'over':''}" style="width:${Math.round(pct*100)}%"></span></span>${Math.round(pct*100)}%` : '—'}</td>
+      <td class="num">${fmtEUR(margen)}</td>
+      <td><button class="row-edit-btn" data-codigo="${escapeHtml(m.codigo)}">Editar</button></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.row-edit-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> openCecoModal(btn.dataset.codigo));
+  });
+}
+
+function renderEvolucionChart(filtered){
+  const codes = new Set(filtered.map(m=>m.codigo));
+  const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const realByMonth = MONTHS.map(mes => state.ingresos.filter(i=>codes.has(i.codigo) && i.mes===mes).reduce((s,i)=>s+i.importe,0));
+  const totalPresupuesto = filtered.reduce((s,m)=>s+m.presupuestoIngresos,0);
+  const previstoByMonth = MONTHS.map(()=> totalPresupuesto/12);
+
+  const ctx = document.getElementById('chartEvolucion');
+  if(charts.evolucion) charts.evolucion.destroy();
+  charts.evolucion = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: MONTHS,
+      datasets:[
+        {label:'Real', data: realByMonth, borderColor:'#185fa5', backgroundColor:'rgba(24,95,165,.08)', fill:true, tension:.25, pointRadius:3, borderWidth:2},
+        {label:'Previsto', data: previstoByMonth, borderColor:'#f2b705', borderDash:[6,4], fill:false, tension:.25, pointRadius:0, borderWidth:2}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{callback:v=>fmtEUR(v)}, grid:{color:'#eef1f5'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+const PALETTE = ['#185fa5','#1baf7a','#eda100','#4a3aa7','#e34948','#e87ba4','#eb6834','#52514e'];
+
+function renderRepartoChart(filtered){
+  const sorted = filtered
+    .map(m=>({label:m.codigo, value: totalIngresos(m.codigo)}))
+    .filter(x=>x.value>0)
+    .sort((a,b)=>b.value-a.value);
+  const top = sorted.slice(0,7);
+  const restoSum = sorted.slice(7).reduce((s,x)=>s+x.value,0);
+  if(restoSum>0) top.push({label:'Otros', value:restoSum});
+
+  const ctx = document.getElementById('chartReparto');
+  if(charts.reparto) charts.reparto.destroy();
+  if(top.length===0){
+    ctx.getContext('2d').clearRect(0,0,ctx.width,ctx.height);
+    return;
+  }
+  charts.reparto = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels: top.map(t=>t.label),
+      datasets:[{data: top.map(t=>t.value), backgroundColor: PALETTE, borderColor:'#fff', borderWidth:2}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}
+    }
+  });
+}
+
+function openCecoModal(codigo){
+  const m = codigo ? state.maestro.find(x=>x.codigo===codigo) : null;
+  const isNew = !m;
+  const data = m || {codigo:'', proyecto:'', cliente:'', unidad:'', responsable:'', estado:'Activo', presupuestoIngresos:0, presupuestoCostes:0, notas:''};
+
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3>${isNew ? 'Nuevo CECO' : 'Editar ' + escapeHtml(data.codigo)}</h3>
+      <div class="field"><label>Código CECO</label><input id="f_codigo" value="${escapeHtml(data.codigo)}" ${isNew?'':'readonly'}></div>
+      <div class="field"><label>Nombre del proyecto</label><input id="f_proyecto" value="${escapeHtml(data.proyecto)}"></div>
+      <div class="field"><label>Cliente</label><input id="f_cliente" value="${escapeHtml(data.cliente)}"></div>
+      <div class="field"><label>Unidad de negocio</label><input id="f_unidad" value="${escapeHtml(data.unidad)}"></div>
+      <div class="field"><label>Estado</label>
+        <select id="f_estado">
+          <option ${data.estado==='Activo'?'selected':''}>Activo</option>
+          <option ${data.estado==='En negociación'?'selected':''}>En negociación</option>
+          <option ${data.estado==='Cerrado'?'selected':''}>Cerrado</option>
+        </select>
+      </div>
+      <div class="field"><label>Presupuesto de ingresos (€)</label><input id="f_presIngresos" type="number" value="${data.presupuestoIngresos||0}"></div>
+      <div class="field"><label>Presupuesto de costes (€)</label><input id="f_presCostes" type="number" value="${data.presupuestoCostes||0}"></div>
+      <div class="modal-actions">
+        ${!isNew ? `<button class="btn-secondary" id="deleteCecoBtn" style="color:#d04848;border-color:#f0c9c9;margin-right:auto;">Eliminar</button>` : ''}
+        <button class="btn-secondary" id="cancelModal">Cancelar</button>
+        <button class="btn-save" id="saveCecoBtn">Guardar</button>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('cancelModal').addEventListener('click', closeModal);
+  document.getElementById('modalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='modalOverlay') closeModal(); });
+  document.getElementById('saveCecoBtn').addEventListener('click', async ()=>{
+    const newCodigo = document.getElementById('f_codigo').value.trim();
+    if(!newCodigo){ showToast('El código de CECO es obligatorio.'); return; }
+    if(isNew && state.maestro.some(x=>x.codigo===newCodigo)){ showToast('Ya existe un CECO con ese código.'); return; }
+
+    const payload = {
+      codigo: newCodigo,
+      proyecto: document.getElementById('f_proyecto').value.trim(),
+      cliente: document.getElementById('f_cliente').value.trim(),
+      unidad: document.getElementById('f_unidad').value.trim(),
+      responsable: data.responsable || '',
+      fechaInicio: data.fechaInicio || '',
+      fechaFin: data.fechaFin || '',
+      estado: document.getElementById('f_estado').value,
+      presupuestoIngresos: Number(document.getElementById('f_presIngresos').value) || 0,
+      presupuestoCostes: Number(document.getElementById('f_presCostes').value) || 0,
+      notas: data.notas || ''
+    };
+
+    if(isNew){
+      state.maestro.push(payload);
+    } else {
+      const idx = state.maestro.findIndex(x=>x.codigo===codigo);
+      state.maestro[idx] = payload;
+    }
+    populateFilterOptions();
+    render();
+    closeModal();
+    showToast(isNew ? 'CECO creado (solo en memoria)' : 'Cambios guardados (solo en memoria)');
+  });
+
+  if(!isNew){
+    document.getElementById('deleteCecoBtn').addEventListener('click', async ()=>{
+      state.maestro = state.maestro.filter(x=>x.codigo!==codigo);
+      populateFilterOptions();
+      render();
+      closeModal();
+      showToast('CECO eliminado (solo en memoria)');
+    });
+  }
+}
+
+function closeModal(){
+  document.getElementById('modalRoot').innerHTML = '';
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.display='none'; }, 2600);
+}
+
+// ============================================================
+// 5. INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('filterCliente').addEventListener('change', render);
+  document.getElementById('filterUnidad').addEventListener('change', render);
+  document.getElementById('filterEstado').addEventListener('change', render);
+  document.getElementById('resetFilters').addEventListener('click', ()=>{
+    document.getElementById('filterCliente').value='';
+    document.getElementById('filterUnidad').value='';
+    document.getElementById('filterEstado').value='';
+    render();
+  });
+  loadAllData();
+});
+</script>
+</body>
+</html>
