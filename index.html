@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 /* ============================================================
-   ESTILOS - Copia exactamente los que ya tienes
+   TODOS TUS ESTILOS EXISTENTES - Copia y pega todo tu CSS aquí
    ============================================================ */
 :root{
   --navy:#0c2547;
@@ -245,7 +245,7 @@ tbody tr:hover{background:#f8fafc;}
     <div class="brand-mark">K</div>
     <div class="brand-text">
       <h1>Seguimiento económico de CECOs</h1>
-      <p id="periodLabel">Ejercicio 2026 · Datos desde Google Sheets</p>
+      <p id="periodLabel">Ejercicio 2026 · Datos desde Google Sheets API</p>
     </div>
   </div>
   <div class="topbar-actions">
@@ -345,31 +345,71 @@ tbody tr:hover{background:#f8fafc;}
 
 <script>
 // ============================================================
-// 1. CONFIGURACIÓN - REEMPLAZA CON TUS URLs DE GOOGLE SHEETS
+// 1. CONFIGURACIÓN - Google Sheets API
 // ============================================================
 const CONFIG = {
-  // ⚠️ IMPORTANTE: Reemplaza estas URLs con las que obtengas al publicar tu archivo
-  URLs: {
-    maestro: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLqtwKmqanpct3b6gmXurOD8CBhuqxAuKG6Mjiobk26Wm_uDZ_T10VbPsbZqRlDg/pub?gid=573468591&single=true&output=csv',
-    ingresos: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLqtwKmqanpct3b6gmXurOD8CBhuqxAuKG6Mjiobk26Wm_uDZ_T10VbPsbZqRlDg/pub?gid=74750691&single=true&output=csv',
-    forecast: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLqtwKmqanpct3b6gmXurOD8CBhuqxAuKG6Mjiobk26Wm_uDZ_T10VbPsbZqRlDg/pub?gid=74750691&single=true&output=csv'
+  // ⚠️ REEMPLAZA CON TU API KEY (la que creaste en Google Cloud Console)
+  API_KEY: 'TU_API_KEY_AQUI',
+  
+  // ID del archivo de Google Sheets (está en la URL)
+  SPREADSHEET_ID: '1zy-ELL3npMiGuwjuZVfKtdBm8xtlP4x0',
+  
+  // Nombres de las hojas (deben coincidir exactamente)
+  SHEETS: {
+    maestro: 'Maestro_CECOs',
+    ingresos: 'Ingresos'
   }
 };
 
 // ============================================================
 // 2. ESTADO DE LA APLICACIÓN
 // ============================================================
-let state = { maestro: [], ingresos: [], forecast: [] };
+let state = { maestro: [], ingresos: [] };
 let charts = {};
 let isLoading = false;
 
 // ============================================================
-// 3. FUNCIONES DE CARGA DESDE GOOGLE SHEETS
+// 3. FUNCIÓN PARA LEER DATOS DE GOOGLE SHEETS API
 // ============================================================
-function parseCSVRow(row, headers) {
+async function fetchSheetData(sheetName) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?key=${CONFIG.API_KEY}`;
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      let errorMsg = `Error ${response.status}`;
+      if (response.status === 403) {
+        errorMsg = 'Acceso denegado. Verifica que: 1) La API Key sea correcta, 2) La Sheets API esté habilitada, 3) El archivo esté compartido con "Cualquiera con el enlace puede ver"';
+      } else if (response.status === 404) {
+        errorMsg = 'Hoja no encontrada. Verifica que el nombre de la hoja sea exactamente "' + sheetName + '"';
+      }
+      throw new Error(errorMsg);
+    }
+    
+    const data = await response.json();
+    
+    // Verificar si hay datos
+    if (!data.values || data.values.length === 0) {
+      throw new Error(`La hoja "${sheetName}" está vacía o no tiene datos.`);
+    }
+    
+    return data.values;
+    
+  } catch (error) {
+    console.error(`Error cargando hoja ${sheetName}:`, error);
+    throw error;
+  }
+}
+
+// ============================================================
+// 4. FUNCIONES DE TRANSFORMACIÓN DE DATOS
+// ============================================================
+function parseSheetRow(row, headers) {
   const obj = {};
   headers.forEach((header, index) => {
     let value = row[index] || '';
+    // Intentar convertir a número
     if (!isNaN(value) && value !== '') {
       obj[header] = Number(value);
     } else {
@@ -379,78 +419,101 @@ function parseCSVRow(row, headers) {
   return obj;
 }
 
-async function fetchCSV(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-  const text = await response.text();
-  const lines = text.split('\n').filter(line => line.trim() !== '');
-  if (lines.length < 2) return [];
+function transformMaestroData(rawData) {
+  // rawData es un array de arrays desde Google Sheets
+  if (!rawData || rawData.length < 2) return [];
   
-  const separator = lines[0].includes(';') ? ';' : ',';
-  const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+  // La primera fila son los headers
+  const headers = rawData[0].map(h => String(h).trim());
+  
+  // Buscar índices de columnas clave
+  const idx = {
+    codigo: headers.indexOf('Código CECO'),
+    proyecto: headers.indexOf('Nombre Proyecto'),
+    cliente: headers.indexOf('Cliente'),
+    unidad: headers.indexOf('Unidad de Negocio'),
+    responsable: headers.indexOf('Responsable'),
+    fechaInicio: headers.indexOf('Fecha Inicio'),
+    fechaFin: headers.indexOf('Fecha Fin Prevista'),
+    estado: headers.indexOf('Estado'),
+    presupuestoIngresos: headers.indexOf('Presupuesto Ingresos Total (€)'),
+    presupuestoCostes: headers.indexOf('Presupuesto Costes Total (€)'),
+    notas: headers.indexOf('Notas')
+  };
   
   const data = [];
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(separator).map(v => v.trim().replace(/^"|"$/g, ''));
-    if (values.length >= headers.length) {
-      data.push(parseCSVRow(values, headers));
-    }
+  for (let i = 1; i < rawData.length; i++) {
+    const row = rawData[i];
+    // Saltar filas vacías
+    if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
+    
+    const codigo = String(row[idx.codigo] || '').trim();
+    if (!codigo) continue;
+    
+    data.push({
+      codigo: codigo,
+      proyecto: String(row[idx.proyecto] || '').trim(),
+      cliente: String(row[idx.cliente] || '').trim(),
+      unidad: String(row[idx.unidad] || '').trim(),
+      responsable: String(row[idx.responsable] || '').trim(),
+      fechaInicio: row[idx.fechaInicio] ? String(row[idx.fechaInicio]).split(' ')[0] : '',
+      fechaFin: row[idx.fechaFin] ? String(row[idx.fechaFin]).split(' ')[0] : '',
+      estado: String(row[idx.estado] || 'Activo').trim(),
+      presupuestoIngresos: Number(row[idx.presupuestoIngresos]) || 0,
+      presupuestoCostes: Number(row[idx.presupuestoCostes]) || 0,
+      notas: String(row[idx.notas] || '').trim()
+    });
   }
+  
   return data;
 }
 
-function parseDateFromCSV(dateStr) {
-  if (!dateStr) return '';
-  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (match) return match[0];
-  return dateStr;
+function transformIngresosData(rawData) {
+  if (!rawData || rawData.length < 2) return [];
+  
+  const headers = rawData[0].map(h => String(h).trim());
+  
+  const idx = {
+    codigo: headers.indexOf('Código CECO'),
+    fecha: headers.indexOf('Fecha'),
+    mes: headers.indexOf('Mes'),
+    anio: headers.indexOf('Año'),
+    tipo: headers.indexOf('Tipo de Ingreso'),
+    concepto: headers.indexOf('Concepto / Descripción'),
+    importe: headers.indexOf('Importe (€)'),
+    factura: headers.indexOf('Nº Factura/Ref.'),
+    estadoCobro: headers.indexOf('Estado Cobro/Pago')
+  };
+  
+  const data = [];
+  for (let i = 1; i < rawData.length; i++) {
+    const row = rawData[i];
+    if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
+    
+    const codigo = String(row[idx.codigo] || '').trim();
+    const importe = Number(row[idx.importe]) || 0;
+    
+    if (!codigo || importe === 0) continue;
+    
+    data.push({
+      codigo: codigo,
+      fecha: row[idx.fecha] ? String(row[idx.fecha]).split(' ')[0] : '',
+      mes: String(row[idx.mes] || '').trim(),
+      anio: Number(row[idx.anio]) || 2026,
+      tipo: String(row[idx.tipo] || '').trim(),
+      concepto: String(row[idx.concepto] || '').trim(),
+      importe: importe,
+      factura: String(row[idx.factura] || '').trim(),
+      estadoCobro: String(row[idx.estadoCobro] || '').trim()
+    });
+  }
+  
+  return data;
 }
 
-function transformMaestroData(raw) {
-  return raw
-    .filter(r => r['Código CECO'] && String(r['Código CECO']).trim())
-    .map(r => ({
-      codigo: String(r['Código CECO']).trim(),
-      proyecto: r['Nombre Proyecto'] || '',
-      cliente: r['Cliente'] || '',
-      unidad: r['Unidad de Negocio'] || '',
-      responsable: r['Responsable'] || '',
-      fechaInicio: parseDateFromCSV(r['Fecha Inicio']),
-      fechaFin: parseDateFromCSV(r['Fecha Fin Prevista']),
-      estado: r['Estado'] || 'Activo',
-      presupuestoIngresos: Number(r['Presupuesto Ingresos Total (€)']) || 0,
-      presupuestoCostes: Number(r['Presupuesto Costes Total (€)']) || 0,
-      notas: r['Notas'] || ''
-    }));
-}
-
-function transformIngresosData(raw) {
-  return raw
-    .filter(r => r['Código CECO'] && String(r['Código CECO']).trim() && r['Importe (€)'] && r['Importe (€)'] !== '')
-    .map(r => ({
-      codigo: String(r['Código CECO']).trim(),
-      fecha: parseDateFromCSV(r['Fecha']),
-      mes: r['Mes'] || '',
-      anio: Number(r['Año']) || 2026,
-      tipo: r['Tipo de Ingreso'] || '',
-      concepto: r['Concepto / Descripción'] || '',
-      importe: Number(r['Importe (€)']) || 0,
-      factura: r['Nº Factura/Ref.'] || '',
-      estadoCobro: r['Estado Cobro/Pago'] || ''
-    }));
-}
-
-function transformForecastData(raw) {
-  const forecastMap = {};
-  raw.forEach(row => {
-    const codigo = String(row['Código CECO'] || '').trim();
-    if (!codigo) return;
-    const total = Number(row['Total Año']) || 0;
-    forecastMap[codigo] = total;
-  });
-  return forecastMap;
-}
-
+// ============================================================
+// 5. FUNCIÓN PRINCIPAL DE CARGA
+// ============================================================
 async function loadAllData() {
   if (isLoading) return;
   isLoading = true;
@@ -458,24 +521,24 @@ async function loadAllData() {
   
   try {
     loadingBar.style.width = '10%';
-    const rawMaestro = await fetchCSV(CONFIG.URLs.maestro);
+    
+    // Cargar Maestro
+    const rawMaestro = await fetchSheetData(CONFIG.SHEETS.maestro);
     loadingBar.style.width = '40%';
     state.maestro = transformMaestroData(rawMaestro);
     
-    const rawIngresos = await fetchCSV(CONFIG.URLs.ingresos);
+    // Cargar Ingresos
+    const rawIngresos = await fetchSheetData(CONFIG.SHEETS.ingresos);
     loadingBar.style.width = '70%';
     state.ingresos = transformIngresosData(rawIngresos);
     
-    if (CONFIG.URLs.forecast) {
-      const rawForecast = await fetchCSV(CONFIG.URLs.forecast);
-      state.forecast = transformForecastData(rawForecast);
-    }
     loadingBar.style.width = '100%';
     
     if (state.maestro.length === 0) {
-      throw new Error('No se encontraron CECOs. Verifica que el archivo esté publicado y la hoja Maestro_CECOs tenga datos.');
+      throw new Error('No se encontraron CECOs. Verifica que la hoja Maestro_CECOs tenga datos.');
     }
     
+    // Mostrar dashboard
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
     
@@ -494,6 +557,12 @@ async function loadAllData() {
       <div style="font-size:32px;">⚠️</div>
       <h3>Error al cargar los datos</h3>
       <p>${error.message}</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+        Verifica que:<br>
+        1. La API Key sea correcta<br>
+        2. La Sheets API esté habilitada en Google Cloud Console<br>
+        3. El archivo esté compartido con "Cualquiera con el enlace puede ver"
+      </p>
       <button class="btn btn-primary" onclick="refreshData()">Reintentar</button>
     `;
   } finally {
@@ -519,7 +588,7 @@ function refreshData() {
 }
 
 // ============================================================
-// 4. FUNCIONES DEL DASHBOARD
+// 6. FUNCIONES DEL DASHBOARD (tus funciones existentes)
 // ============================================================
 function getFilteredMaestro(){
   const cliente = document.getElementById('filterCliente').value;
@@ -665,138 +734,4 @@ function renderEvolucionChart(filtered){
   });
 }
 
-const PALETTE = ['#185fa5','#1baf7a','#eda100','#4a3aa7','#e34948','#e87ba4','#eb6834','#52514e'];
-
-function renderRepartoChart(filtered){
-  const sorted = filtered
-    .map(m=>({label:m.codigo, value: totalIngresos(m.codigo)}))
-    .filter(x=>x.value>0)
-    .sort((a,b)=>b.value-a.value);
-  const top = sorted.slice(0,7);
-  const restoSum = sorted.slice(7).reduce((s,x)=>s+x.value,0);
-  if(restoSum>0) top.push({label:'Otros', value:restoSum});
-
-  const ctx = document.getElementById('chartReparto');
-  if(charts.reparto) charts.reparto.destroy();
-  if(top.length===0){
-    ctx.getContext('2d').clearRect(0,0,ctx.width,ctx.height);
-    return;
-  }
-  charts.reparto = new Chart(ctx, {
-    type:'doughnut',
-    data:{
-      labels: top.map(t=>t.label),
-      datasets:[{data: top.map(t=>t.value), backgroundColor: PALETTE, borderColor:'#fff', borderWidth:2}]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}
-    }
-  });
-}
-
-function openCecoModal(codigo){
-  const m = codigo ? state.maestro.find(x=>x.codigo===codigo) : null;
-  const isNew = !m;
-  const data = m || {codigo:'', proyecto:'', cliente:'', unidad:'', responsable:'', estado:'Activo', presupuestoIngresos:0, presupuestoCostes:0, notas:''};
-
-  const root = document.getElementById('modalRoot');
-  root.innerHTML = `
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h3>${isNew ? 'Nuevo CECO' : 'Editar ' + escapeHtml(data.codigo)}</h3>
-      <div class="field"><label>Código CECO</label><input id="f_codigo" value="${escapeHtml(data.codigo)}" ${isNew?'':'readonly'}></div>
-      <div class="field"><label>Nombre del proyecto</label><input id="f_proyecto" value="${escapeHtml(data.proyecto)}"></div>
-      <div class="field"><label>Cliente</label><input id="f_cliente" value="${escapeHtml(data.cliente)}"></div>
-      <div class="field"><label>Unidad de negocio</label><input id="f_unidad" value="${escapeHtml(data.unidad)}"></div>
-      <div class="field"><label>Estado</label>
-        <select id="f_estado">
-          <option ${data.estado==='Activo'?'selected':''}>Activo</option>
-          <option ${data.estado==='En negociación'?'selected':''}>En negociación</option>
-          <option ${data.estado==='Cerrado'?'selected':''}>Cerrado</option>
-        </select>
-      </div>
-      <div class="field"><label>Presupuesto de ingresos (€)</label><input id="f_presIngresos" type="number" value="${data.presupuestoIngresos||0}"></div>
-      <div class="field"><label>Presupuesto de costes (€)</label><input id="f_presCostes" type="number" value="${data.presupuestoCostes||0}"></div>
-      <div class="modal-actions">
-        ${!isNew ? `<button class="btn-secondary" id="deleteCecoBtn" style="color:#d04848;border-color:#f0c9c9;margin-right:auto;">Eliminar</button>` : ''}
-        <button class="btn-secondary" id="cancelModal">Cancelar</button>
-        <button class="btn-save" id="saveCecoBtn">Guardar</button>
-      </div>
-    </div>
-  </div>`;
-
-  document.getElementById('cancelModal').addEventListener('click', closeModal);
-  document.getElementById('modalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='modalOverlay') closeModal(); });
-  document.getElementById('saveCecoBtn').addEventListener('click', async ()=>{
-    const newCodigo = document.getElementById('f_codigo').value.trim();
-    if(!newCodigo){ showToast('El código de CECO es obligatorio.'); return; }
-    if(isNew && state.maestro.some(x=>x.codigo===newCodigo)){ showToast('Ya existe un CECO con ese código.'); return; }
-
-    const payload = {
-      codigo: newCodigo,
-      proyecto: document.getElementById('f_proyecto').value.trim(),
-      cliente: document.getElementById('f_cliente').value.trim(),
-      unidad: document.getElementById('f_unidad').value.trim(),
-      responsable: data.responsable || '',
-      fechaInicio: data.fechaInicio || '',
-      fechaFin: data.fechaFin || '',
-      estado: document.getElementById('f_estado').value,
-      presupuestoIngresos: Number(document.getElementById('f_presIngresos').value) || 0,
-      presupuestoCostes: Number(document.getElementById('f_presCostes').value) || 0,
-      notas: data.notas || ''
-    };
-
-    if(isNew){
-      state.maestro.push(payload);
-    } else {
-      const idx = state.maestro.findIndex(x=>x.codigo===codigo);
-      state.maestro[idx] = payload;
-    }
-    populateFilterOptions();
-    render();
-    closeModal();
-    showToast(isNew ? 'CECO creado (solo en memoria)' : 'Cambios guardados (solo en memoria)');
-  });
-
-  if(!isNew){
-    document.getElementById('deleteCecoBtn').addEventListener('click', async ()=>{
-      state.maestro = state.maestro.filter(x=>x.codigo!==codigo);
-      populateFilterOptions();
-      render();
-      closeModal();
-      showToast('CECO eliminado (solo en memoria)');
-    });
-  }
-}
-
-function closeModal(){
-  document.getElementById('modalRoot').innerHTML = '';
-}
-
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(()=>{ t.style.display='none'; }, 2600);
-}
-
-// ============================================================
-// 5. INICIALIZACIÓN
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('filterCliente').addEventListener('change', render);
-  document.getElementById('filterUnidad').addEventListener('change', render);
-  document.getElementById('filterEstado').addEventListener('change', render);
-  document.getElementById('resetFilters').addEventListener('click', ()=>{
-    document.getElementById('filterCliente').value='';
-    document.getElementById('filterUnidad').value='';
-    document.getElementById('filterEstado').value='';
-    render();
-  });
-  loadAllData();
-});
-</script>
-</body>
-</html>
+const PALETTE = ['#185
