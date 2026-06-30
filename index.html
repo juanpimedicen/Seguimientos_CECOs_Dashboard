@@ -1,865 +1,1028 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seguimiento CECOs · Konecta (Live)</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>
-/* ============================================================
-   TODOS TUS ESTILOS EXISTENTES - Copia y pega todo tu CSS aquí
-   ============================================================ */
-:root{
-  --navy:#0c2547;
-  --navy-2:#13325c;
-  --blue:#185fa5;
-  --blue-light:#378ADD;
-  --yellow:#f2b705;
-  --yellow-dark:#c98e00;
-  --bg:#f4f6f9;
-  --card:#ffffff;
-  --border:#e3e7ee;
-  --border-strong:#cdd4df;
-  --text:#16233a;
-  --text-secondary:#5a6678;
-  --text-muted:#8993a3;
-  --green:#1d9e75;
-  --green-bg:#e1f5ee;
-  --red:#d04848;
-  --red-bg:#fbeaea;
-  --amber:#c98500;
-  --amber-bg:#fdf2dd;
-  --radius:10px;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-*{box-sizing:border-box;}
-body{
-  margin:0;
-  font-family:var(--font);
-  background:var(--bg);
-  color:var(--text);
-  -webkit-font-smoothing:antialiased;
-}
-.topbar{
-  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
-  color:#fff;
-  padding:20px 32px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  flex-wrap:wrap;
-  gap:16px;
-}
-.brand{display:flex;align-items:center;gap:14px;}
-.brand-mark{
-  width:38px;height:38px;border-radius:8px;
-  background:var(--yellow);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;color:var(--navy);font-size:17px;
-}
-.brand-text h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.2px;}
-.brand-text p{margin:0;font-size:12.5px;color:#b9c6dc;}
-.topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.btn{
-  border:1px solid rgba(255,255,255,.25);
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  padding:9px 16px;
-  border-radius:8px;
-  font-size:13.5px;
-  font-weight:500;
-  cursor:pointer;
-  display:flex;align-items:center;gap:8px;
-  transition:background .15s ease;
-}
-.btn:hover{background:rgba(255,255,255,.18);}
-.btn-primary{
-  background:var(--yellow);
-  color:var(--navy);
-  border-color:var(--yellow);
-  font-weight:700;
-}
-.btn-primary:hover{background:var(--yellow-dark);}
-.btn-light{
-  background:#fff;color:var(--navy);border-color:#fff;font-weight:600;
-}
-.btn-light:hover{background:#eef1f6;}
-.container{max-width:1320px;margin:0 auto;padding:24px 32px 60px;}
-.filters{
-  display:flex;gap:12px;flex-wrap:wrap;align-items:center;
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px 18px;
-  margin-bottom:20px;
-}
-.filters label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px;}
-.filters select, .filters input[type=text]{
-  font-family:var(--font);
-  font-size:13.5px;
-  padding:8px 10px;
-  border:1px solid var(--border-strong);
-  border-radius:7px;
-  background:#fff;
-  color:var(--text);
-  min-width:160px;
-}
-.filters .field{display:flex;flex-direction:column;}
-.filters .spacer{flex:1;}
-.filters .reset{
-  font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;
-  padding:8px 4px;
-}
-.kpi-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-  gap:14px;
-  margin-bottom:24px;
-}
-.kpi{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:16px 18px;
-  position:relative;
-  overflow:hidden;
-}
-.kpi::before{
-  content:"";
-  position:absolute;top:0;left:0;width:4px;height:100%;
-  background:var(--blue);
-}
-.kpi.accent-yellow::before{background:var(--yellow);}
-.kpi.accent-green::before{background:var(--green);}
-.kpi.accent-red::before{background:var(--red);}
-.kpi-label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;}
-.kpi-value{font-size:24px;font-weight:700;color:var(--navy);letter-spacing:-.3px;}
-.kpi-sub{font-size:12px;color:var(--text-secondary);margin-top:4px;}
-.panel{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  margin-bottom:22px;
-  overflow:hidden;
-}
-.panel-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px;
-  border-bottom:1px solid var(--border);
-  flex-wrap:wrap;gap:10px;
-}
-.panel-header h2{margin:0;font-size:15px;font-weight:600;color:var(--navy);}
-.panel-header .hint{font-size:12px;color:var(--text-muted);}
-.panel-body{padding:18px 20px;}
-.charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
-@media(max-width:900px){.charts-row{grid-template-columns:1fr;}}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{
-  text-align:left;
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.3px;
-  color:var(--text-muted);
-  font-weight:700;
-  padding:10px 12px;
-  border-bottom:2px solid var(--border);
-  white-space:nowrap;
-}
-tbody td{
-  padding:10px 12px;
-  border-bottom:1px solid var(--border);
-  color:var(--text);
-  white-space:nowrap;
-}
-tbody tr:hover{background:#f8fafc;}
-.num{text-align:right;font-variant-numeric:tabular-nums;}
-.badge{
-  font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;
-}
-.badge-activo{background:var(--green-bg);color:var(--green);}
-.badge-negociacion{background:var(--amber-bg);color:var(--amber);}
-.badge-cerrado{background:#eef0f3;color:var(--text-secondary);}
-.bar-track{width:100px;height:6px;background:#eef1f5;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
-.bar-fill{height:100%;background:var(--blue);}
-.bar-fill.over{background:var(--green);}
-.row-edit-btn{
-  border:1px solid var(--border-strong);background:#fff;color:var(--blue);
-  font-size:11.5px;padding:4px 9px;border-radius:6px;cursor:pointer;font-weight:600;
-}
-.row-edit-btn:hover{background:#f0f5fb;}
-.dropzone{
-  border:2px dashed var(--border-strong);
-  border-radius:14px;
-  padding:50px 20px;
-  text-align:center;
-  background:#fbfcfe;
-  transition:border-color .15s, background .15s;
-  cursor:pointer;
-}
-.dropzone.dragover{border-color:var(--blue);background:#eef5fc;}
-.dropzone h3{color:var(--navy);margin:14px 0 6px;font-size:16px;}
-.dropzone p{color:var(--text-muted);font-size:13px;margin:0 0 18px;}
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(12,37,71,.45);
-  display:flex;align-items:center;justify-content:center;z-index:100;
-  padding:20px;
-}
-.modal{
-  background:#fff;border-radius:12px;max-width:480px;width:100%;
-  padding:24px;max-height:85vh;overflow-y:auto;
-}
-.modal h3{margin:0 0 16px;color:var(--navy);font-size:16px;}
-.modal .field{margin-bottom:12px;}
-.modal label{font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;}
-.modal input, .modal select{
-  width:100%;padding:9px 10px;border:1px solid var(--border-strong);border-radius:7px;
-  font-family:var(--font);font-size:13.5px;
-}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
-.btn-secondary{
-  border:1px solid var(--border-strong);background:#fff;color:var(--text);
-  padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
-}
-.btn-secondary:hover{background:#f4f6f9;}
-.btn-save{
-  border:1px solid var(--blue);background:var(--blue);color:#fff;
-  padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
-}
-.btn-save:hover{background:var(--navy);}
-.toast{
-  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-  background:var(--navy);color:#fff;padding:11px 20px;border-radius:8px;
-  font-size:13.5px;font-weight:500;z-index:200;
-  box-shadow:0 6px 20px rgba(0,0,0,.2);
-  display:none;
-}
-.legend-row{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin-bottom:10px;}
-.legend-row span{display:flex;align-items:center;gap:6px;}
-.legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento CECOs · Konecta (Live con OAuth)</title>
+    <!-- Google API Client Library para autenticación OAuth 2.0 -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+        /* ============================================================
+           TODOS TUS ESTILOS EXISTENTES - Coloca aquí todo tu CSS
+           ============================================================ */
+        :root{
+          --navy:#0c2547;
+          --navy-2:#13325c;
+          --blue:#185fa5;
+          --blue-light:#378ADD;
+          --yellow:#f2b705;
+          --yellow-dark:#c98e00;
+          --bg:#f4f6f9;
+          --card:#ffffff;
+          --border:#e3e7ee;
+          --border-strong:#cdd4df;
+          --text:#16233a;
+          --text-secondary:#5a6678;
+          --text-muted:#8993a3;
+          --green:#1d9e75;
+          --green-bg:#e1f5ee;
+          --red:#d04848;
+          --red-bg:#fbeaea;
+          --amber:#c98500;
+          --amber-bg:#fdf2dd;
+          --radius:10px;
+          --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        *{box-sizing:border-box;}
+        body{
+          margin:0;
+          font-family:var(--font);
+          background:var(--bg);
+          color:var(--text);
+          -webkit-font-smoothing:antialiased;
+        }
+        .topbar{
+          background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+          color:#fff;
+          padding:20px 32px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:16px;
+        }
+        .brand{display:flex;align-items:center;gap:14px;}
+        .brand-mark{
+          width:38px;height:38px;border-radius:8px;
+          background:var(--yellow);
+          display:flex;align-items:center;justify-content:center;
+          font-weight:800;color:var(--navy);font-size:17px;
+        }
+        .brand-text h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.2px;}
+        .brand-text p{margin:0;font-size:12.5px;color:#b9c6dc;}
+        .topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+        .btn{
+          border:1px solid rgba(255,255,255,.25);
+          background:rgba(255,255,255,.08);
+          color:#fff;
+          padding:9px 16px;
+          border-radius:8px;
+          font-size:13.5px;
+          font-weight:500;
+          cursor:pointer;
+          display:flex;align-items:center;gap:8px;
+          transition:background .15s ease;
+        }
+        .btn:hover{background:rgba(255,255,255,.18);}
+        .btn-primary{
+          background:var(--yellow);
+          color:var(--navy);
+          border-color:var(--yellow);
+          font-weight:700;
+        }
+        .btn-primary:hover{background:var(--yellow-dark);}
+        .btn-light{
+          background:#fff;color:var(--navy);border-color:#fff;font-weight:600;
+        }
+        .btn-light:hover{background:#eef1f6;}
+        .container{max-width:1320px;margin:0 auto;padding:24px 32px 60px;}
+        .filters{
+          display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+          background:var(--card);
+          border:1px solid var(--border);
+          border-radius:var(--radius);
+          padding:14px 18px;
+          margin-bottom:20px;
+        }
+        .filters label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px;}
+        .filters select, .filters input[type=text]{
+          font-family:var(--font);
+          font-size:13.5px;
+          padding:8px 10px;
+          border:1px solid var(--border-strong);
+          border-radius:7px;
+          background:#fff;
+          color:var(--text);
+          min-width:160px;
+        }
+        .filters .field{display:flex;flex-direction:column;}
+        .filters .spacer{flex:1;}
+        .filters .reset{
+          font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;
+          padding:8px 4px;
+        }
+        .kpi-grid{
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+          gap:14px;
+          margin-bottom:24px;
+        }
+        .kpi{
+          background:var(--card);
+          border:1px solid var(--border);
+          border-radius:var(--radius);
+          padding:16px 18px;
+          position:relative;
+          overflow:hidden;
+        }
+        .kpi::before{
+          content:"";
+          position:absolute;top:0;left:0;width:4px;height:100%;
+          background:var(--blue);
+        }
+        .kpi.accent-yellow::before{background:var(--yellow);}
+        .kpi.accent-green::before{background:var(--green);}
+        .kpi.accent-red::before{background:var(--red);}
+        .kpi-label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;}
+        .kpi-value{font-size:24px;font-weight:700;color:var(--navy);letter-spacing:-.3px;}
+        .kpi-sub{font-size:12px;color:var(--text-secondary);margin-top:4px;}
+        .panel{
+          background:var(--card);
+          border:1px solid var(--border);
+          border-radius:var(--radius);
+          margin-bottom:22px;
+          overflow:hidden;
+        }
+        .panel-header{
+          display:flex;align-items:center;justify-content:space-between;
+          padding:16px 20px;
+          border-bottom:1px solid var(--border);
+          flex-wrap:wrap;gap:10px;
+        }
+        .panel-header h2{margin:0;font-size:15px;font-weight:600;color:var(--navy);}
+        .panel-header .hint{font-size:12px;color:var(--text-muted);}
+        .panel-body{padding:18px 20px;}
+        .charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
+        @media(max-width:900px){.charts-row{grid-template-columns:1fr;}}
+        table{width:100%;border-collapse:collapse;font-size:13px;}
+        thead th{
+          text-align:left;
+          font-size:11px;
+          text-transform:uppercase;
+          letter-spacing:.3px;
+          color:var(--text-muted);
+          font-weight:700;
+          padding:10px 12px;
+          border-bottom:2px solid var(--border);
+          white-space:nowrap;
+        }
+        tbody td{
+          padding:10px 12px;
+          border-bottom:1px solid var(--border);
+          color:var(--text);
+          white-space:nowrap;
+        }
+        tbody tr:hover{background:#f8fafc;}
+        .num{text-align:right;font-variant-numeric:tabular-nums;}
+        .badge{
+          font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;
+        }
+        .badge-activo{background:var(--green-bg);color:var(--green);}
+        .badge-negociacion{background:var(--amber-bg);color:var(--amber);}
+        .badge-cerrado{background:#eef0f3;color:var(--text-secondary);}
+        .bar-track{width:100px;height:6px;background:#eef1f5;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
+        .bar-fill{height:100%;background:var(--blue);}
+        .bar-fill.over{background:var(--green);}
+        .row-edit-btn{
+          border:1px solid var(--border-strong);background:#fff;color:var(--blue);
+          font-size:11.5px;padding:4px 9px;border-radius:6px;cursor:pointer;font-weight:600;
+        }
+        .row-edit-btn:hover{background:#f0f5fb;}
+        .dropzone{
+          border:2px dashed var(--border-strong);
+          border-radius:14px;
+          padding:50px 20px;
+          text-align:center;
+          background:#fbfcfe;
+          transition:border-color .15s, background .15s;
+          cursor:pointer;
+        }
+        .dropzone.dragover{border-color:var(--blue);background:#eef5fc;}
+        .dropzone h3{color:var(--navy);margin:14px 0 6px;font-size:16px;}
+        .dropzone p{color:var(--text-muted);font-size:13px;margin:0 0 18px;}
+        .modal-overlay{
+          position:fixed;inset:0;background:rgba(12,37,71,.45);
+          display:flex;align-items:center;justify-content:center;z-index:100;
+          padding:20px;
+        }
+        .modal{
+          background:#fff;border-radius:12px;max-width:480px;width:100%;
+          padding:24px;max-height:85vh;overflow-y:auto;
+        }
+        .modal h3{margin:0 0 16px;color:var(--navy);font-size:16px;}
+        .modal .field{margin-bottom:12px;}
+        .modal label{font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;}
+        .modal input, .modal select{
+          width:100%;padding:9px 10px;border:1px solid var(--border-strong);border-radius:7px;
+          font-family:var(--font);font-size:13.5px;
+        }
+        .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+        .btn-secondary{
+          border:1px solid var(--border-strong);background:#fff;color:var(--text);
+          padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
+        }
+        .btn-secondary:hover{background:#f4f6f9;}
+        .btn-save{
+          border:1px solid var(--blue);background:var(--blue);color:#fff;
+          padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
+        }
+        .btn-save:hover{background:var(--navy);}
+        .toast{
+          position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+          background:var(--navy);color:#fff;padding:11px 20px;border-radius:8px;
+          font-size:13.5px;font-weight:500;z-index:200;
+          box-shadow:0 6px 20px rgba(0,0,0,.2);
+          display:none;
+        }
+        .legend-row{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin-bottom:10px;}
+        .legend-row span{display:flex;align-items:center;gap:6px;}
+        .legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+        /* Estilos específicos del login */
+        #loginContainer {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 30px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #loginContainer h2 {
+            color: var(--navy);
+            margin-top: 0;
+        }
+        #loginContainer p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+    </style>
 </head>
 <body>
-
-<div class="topbar">
-  <div class="brand">
-    <div class="brand-mark">K</div>
-    <div class="brand-text">
-      <h1>Seguimiento económico de CECOs</h1>
-      <p id="periodLabel">Ejercicio 2026 · Datos desde Google Sheets API</p>
-    </div>
-  </div>
-  <div class="topbar-actions">
-    <button class="btn btn-light" id="refreshBtn" onclick="window.refreshData()">🔄 Actualizar datos</button>
-    <span id="lastUpdate" style="font-size:12px;color:rgba(255,255,255,0.7);margin-right:8px;"></span>
-  </div>
-</div>
-
-<div class="container" id="container">
-  <div id="loadingState" class="dropzone" style="display:block;">
-    <div style="font-size:32px;">⏳</div>
-    <h3>Cargando datos desde Google Sheets...</h3>
-    <p>Por favor espera mientras se sincronizan los datos del dashboard</p>
-    <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
-      <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
-    </div>
-  </div>
-
-  <div id="mainContent" style="display:none;">
-    <div class="filters">
-      <div class="field">
-        <label>Cliente</label>
-        <select id="filterCliente"><option value="">Todos</option></select>
-      </div>
-      <div class="field">
-        <label>Unidad de negocio</label>
-        <select id="filterUnidad"><option value="">Todas</option></select>
-      </div>
-      <div class="field">
-        <label>Estado</label>
-        <select id="filterEstado"><option value="">Todos</option></select>
-      </div>
-      <div class="spacer"></div>
-      <button class="reset" id="resetFilters">Limpiar filtros</button>
-    </div>
-
-    <div class="kpi-grid" id="kpiGrid"></div>
-
-    <div class="charts-row">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Real vs previsto · evolución mensual</h2>
-          <span class="hint">Suma de todos los CECOs filtrados</span>
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="brand">
+            <div class="brand-mark">K</div>
+            <div class="brand-text">
+                <h1>Seguimiento económico de CECOs</h1>
+                <p id="periodLabel">Ejercicio 2026 · Datos seguros con OAuth 2.0</p>
+            </div>
         </div>
-        <div class="panel-body">
-          <div class="legend-row">
-            <span><span class="legend-dot" style="background:#185fa5"></span>Real</span>
-            <span><span class="legend-dot" style="background:#f2b705"></span>Previsto</span>
-          </div>
-          <div style="position:relative;height:260px;">
-            <canvas id="chartEvolucion" role="img" aria-label="Evolución mensual de ingresos reales frente a previstos"></canvas>
-          </div>
+        <div class="topbar-actions">
+            <button class="btn btn-light" id="refreshBtn" onclick="window.refreshData()">🔄 Actualizar datos</button>
+            <span id="lastUpdate" style="font-size:12px;color:rgba(255,255,255,0.7);margin-right:8px;"></span>
         </div>
-      </div>
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Reparto de ingresos por CECO</h2>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="container" id="container">
+        <!-- Login State -->
+        <div id="loginContainer" style="display:block;">
+            <h2>🔐 Acceso al Dashboard</h2>
+            <p>Para visualizar los datos, necesitas iniciar sesión con tu cuenta de Google de Konecta.</p>
+            <button class="btn btn-primary" id="loginBtn">Iniciar sesión con Google</button>
+            <div id="loginStatus" style="margin-top:16px;font-size:13px;color:var(--text-muted);"></div>
         </div>
-        <div class="panel-body">
-          <div style="position:relative;height:260px;">
-            <canvas id="chartReparto" role="img" aria-label="Reparto de ingresos por CECO"></canvas>
-          </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="dropzone" style="display:none;">
+            <div style="font-size:32px;">⏳</div>
+            <h3>Cargando datos desde Google Sheets...</h3>
+            <p>Por favor espera mientras se sincronizan los datos del dashboard</p>
+            <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
+                <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
+            </div>
         </div>
-      </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" style="display:none;">
+            <div class="filters">
+                <div class="field">
+                    <label>Cliente</label>
+                    <select id="filterCliente"><option value="">Todos</option></select>
+                </div>
+                <div class="field">
+                    <label>Unidad de negocio</label>
+                    <select id="filterUnidad"><option value="">Todas</option></select>
+                </div>
+                <div class="field">
+                    <label>Estado</label>
+                    <select id="filterEstado"><option value="">Todos</option></select>
+                </div>
+                <div class="spacer"></div>
+                <button class="reset" id="resetFilters">Limpiar filtros</button>
+            </div>
+
+            <div class="kpi-grid" id="kpiGrid"></div>
+
+            <div class="charts-row">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Real vs previsto · evolución mensual</h2>
+                        <span class="hint">Suma de todos los CECOs filtrados</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="legend-row">
+                            <span><span class="legend-dot" style="background:#185fa5"></span>Real</span>
+                            <span><span class="legend-dot" style="background:#f2b705"></span>Previsto</span>
+                        </div>
+                        <div style="position:relative;height:260px;">
+                            <canvas id="chartEvolucion" role="img" aria-label="Evolución mensual de ingresos reales frente a previstos"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Reparto de ingresos por CECO</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div style="position:relative;height:260px;">
+                            <canvas id="chartReparto" role="img" aria-label="Reparto de ingresos por CECO"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Detalle por CECO</h2>
+                    <span class="hint" id="tableCount"></span>
+                </div>
+                <div class="panel-body" style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Proyecto</th>
+                                <th>Cliente</th>
+                                <th>Unidad</th>
+                                <th>Estado</th>
+                                <th class="num">Presupuesto</th>
+                                <th class="num">Real facturado</th>
+                                <th>Avance</th>
+                                <th class="num">Margen</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cecoTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-header">
-        <h2>Detalle por CECO</h2>
-        <span class="hint" id="tableCount"></span>
-      </div>
-      <div class="panel-body" style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Proyecto</th>
-              <th>Cliente</th>
-              <th>Unidad</th>
-              <th>Estado</th>
-              <th class="num">Presupuesto</th>
-              <th class="num">Real facturado</th>
-              <th>Avance</th>
-              <th class="num">Margen</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="cecoTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+    <div id="modalRoot"></div>
+    <div class="toast" id="toast"></div>
 
-<div id="modalRoot"></div>
-<div class="toast" id="toast"></div>
+    <script>
+        // ============================================================
+        // 1. CONFIGURACIÓN DE OAuth 2.0
+        // ============================================================
+        const CONFIG = {
+            // Tu Client ID OAuth 2.0
+            CLIENT_ID: '758143935798-am5559p4kt5k7vb8b6bidt4ufodiu0ue.apps.googleusercontent.com',
+            // ID del archivo de Google Sheets (nuevo)
+            SPREADSHEET_ID: '1X_hXlM4lWFZVJG8945NL6YBo87vLAicvBN5xqzL2h_E',
+            // Alcances (permisos) necesarios: solo lectura de Sheets
+            SCOPES: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+            // Nombres de las hojas
+            SHEETS: {
+                maestro: 'Maestro_CECOs',
+                ingresos: 'Ingresos'
+            }
+        };
 
-<script>
-// ============================================================
-// 1. CONFIGURACIÓN - Google Sheets API
-// ============================================================
-const CONFIG = {
-  API_KEY: 'AIzaSyCVSPO17GEJoOCH7RZh2x8yJtzMRF69nNc',
-  SPREADSHEET_ID: '1X_hXlM4lWFZVJG8945NL6YBo87vLAicvBN5xqzL2h_E',
-  SHEETS: {
-    maestro: 'Maestro_CECOs',
-    ingresos: 'Ingresos'
-  }
-};
+        // ============================================================
+        // 2. ESTADO DE LA APLICACIÓN
+        // ============================================================
+        let state = { maestro: [], ingresos: [] };
+        let charts = {};
+        let isLoading = false;
+        let authToken = null;
 
-// ============================================================
-// 2. ESTADO DE LA APLICACIÓN
-// ============================================================
-let state = { maestro: [], ingresos: [] };
-let charts = {};
-let isLoading = false;
+        // ============================================================
+        // 3. FUNCIONES DE AUTENTICACIÓN OAuth
+        // ============================================================
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
 
-// ============================================================
-// 3. FUNCIÓN PARA LEER DATOS DE GOOGLE SHEETS API
-// ============================================================
-async function fetchSheetData(sheetName) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?key=${CONFIG.API_KEY}`;
-  
-  console.log('Fetching:', url); // Para depuración
-  
-  try {
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      let errorMsg = `Error ${response.status}`;
-      if (response.status === 403) {
-        errorMsg = 'Acceso denegado. Verifica que: 1) La API Key sea correcta, 2) La Sheets API esté habilitada, 3) El archivo esté compartido con "Cualquiera con el enlace puede ver"';
-      } else if (response.status === 404) {
-        errorMsg = 'Hoja no encontrada. Verifica que el nombre de la hoja sea exactamente "' + sheetName + '"';
-      }
-      throw new Error(errorMsg);
-    }
-    
-    const data = await response.json();
-    
-    if (!data.values || data.values.length === 0) {
-      throw new Error(`La hoja "${sheetName}" está vacía o no tiene datos.`);
-    }
-    
-    return data.values;
-    
-  } catch (error) {
-    console.error(`Error cargando hoja ${sheetName}:`, error);
-    throw error;
-  }
-}
+        function updateLoginStatus(message, isError = false) {
+            const status = document.getElementById('loginStatus');
+            status.textContent = message;
+            status.style.color = isError ? '#d04848' : 'var(--text-muted)';
+        }
 
-// ============================================================
-// 4. FUNCIONES DE TRANSFORMACIÓN DE DATOS
-// ============================================================
-function transformMaestroData(rawData) {
-  if (!rawData || rawData.length < 2) return [];
-  
-  const headers = rawData[0].map(h => String(h).trim());
-  
-  const idx = {
-    codigo: headers.indexOf('Código CECO'),
-    proyecto: headers.indexOf('Nombre Proyecto'),
-    cliente: headers.indexOf('Cliente'),
-    unidad: headers.indexOf('Unidad de Negocio'),
-    responsable: headers.indexOf('Responsable'),
-    fechaInicio: headers.indexOf('Fecha Inicio'),
-    fechaFin: headers.indexOf('Fecha Fin Prevista'),
-    estado: headers.indexOf('Estado'),
-    presupuestoIngresos: headers.indexOf('Presupuesto Ingresos Total (€)'),
-    presupuestoCostes: headers.indexOf('Presupuesto Costes Total (€)'),
-    notas: headers.indexOf('Notas')
-  };
-  
-  const data = [];
-  for (let i = 1; i < rawData.length; i++) {
-    const row = rawData[i];
-    if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
-    
-    const codigo = String(row[idx.codigo] || '').trim();
-    if (!codigo) continue;
-    
-    data.push({
-      codigo: codigo,
-      proyecto: String(row[idx.proyecto] || '').trim(),
-      cliente: String(row[idx.cliente] || '').trim(),
-      unidad: String(row[idx.unidad] || '').trim(),
-      responsable: String(row[idx.responsable] || '').trim(),
-      fechaInicio: row[idx.fechaInicio] ? String(row[idx.fechaInicio]).split(' ')[0] : '',
-      fechaFin: row[idx.fechaFin] ? String(row[idx.fechaFin]).split(' ')[0] : '',
-      estado: String(row[idx.estado] || 'Activo').trim(),
-      presupuestoIngresos: Number(row[idx.presupuestoIngresos]) || 0,
-      presupuestoCostes: Number(row[idx.presupuestoCostes]) || 0,
-      notas: String(row[idx.notas] || '').trim()
-    });
-  }
-  
-  return data;
-}
+        // Función para autenticar al usuario
+        function authenticateUser() {
+            return new Promise((resolve, reject) => {
+                updateLoginStatus('Iniciando sesión...');
 
-function transformIngresosData(rawData) {
-  if (!rawData || rawData.length < 2) return [];
-  
-  const headers = rawData[0].map(h => String(h).trim());
-  
-  const idx = {
-    codigo: headers.indexOf('Código CECO'),
-    fecha: headers.indexOf('Fecha'),
-    mes: headers.indexOf('Mes'),
-    anio: headers.indexOf('Año'),
-    tipo: headers.indexOf('Tipo de Ingreso'),
-    concepto: headers.indexOf('Concepto / Descripción'),
-    importe: headers.indexOf('Importe (€)'),
-    factura: headers.indexOf('Nº Factura/Ref.'),
-    estadoCobro: headers.indexOf('Estado Cobro/Pago')
-  };
-  
-  const data = [];
-  for (let i = 1; i < rawData.length; i++) {
-    const row = rawData[i];
-    if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
-    
-    const codigo = String(row[idx.codigo] || '').trim();
-    const importe = Number(row[idx.importe]) || 0;
-    
-    if (!codigo || importe === 0) continue;
-    
-    data.push({
-      codigo: codigo,
-      fecha: row[idx.fecha] ? String(row[idx.fecha]).split(' ')[0] : '',
-      mes: String(row[idx.mes] || '').trim(),
-      anio: Number(row[idx.anio]) || 2026,
-      tipo: String(row[idx.tipo] || '').trim(),
-      concepto: String(row[idx.concepto] || '').trim(),
-      importe: importe,
-      factura: String(row[idx.factura] || '').trim(),
-      estadoCobro: String(row[idx.estadoCobro] || '').trim()
-    });
-  }
-  
-  return data;
-}
+                // Verificar si gapi está disponible
+                if (typeof gapi === 'undefined' || !gapi.auth2) {
+                    reject(new Error('La biblioteca de Google no se ha cargado correctamente. Verifica tu conexión a internet.'));
+                    return;
+                }
 
-// ============================================================
-// 5. FUNCIÓN PRINCIPAL DE CARGA
-// ============================================================
-async function loadAllData() {
-  if (isLoading) return;
-  isLoading = true;
-  const loadingBar = document.getElementById('loadingBar');
-  
-  try {
-    loadingBar.style.width = '10%';
-    console.log('Cargando Maestro_CECOs...');
-    const rawMaestro = await fetchSheetData(CONFIG.SHEETS.maestro);
-    loadingBar.style.width = '40%';
-    state.maestro = transformMaestroData(rawMaestro);
-    console.log(`✅ Maestro cargado: ${state.maestro.length} CECOs`);
-    
-    loadingBar.style.width = '70%';
-    console.log('Cargando Ingresos...');
-    const rawIngresos = await fetchSheetData(CONFIG.SHEETS.ingresos);
-    state.ingresos = transformIngresosData(rawIngresos);
-    console.log(`✅ Ingresos cargados: ${state.ingresos.length} registros`);
-    
-    loadingBar.style.width = '100%';
-    
-    if (state.maestro.length === 0) {
-      throw new Error('No se encontraron CECOs. Verifica que la hoja Maestro_CECOs tenga datos.');
-    }
-    
-    // Mostrar dashboard
-    document.getElementById('loadingState').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-    
-    populateFilterOptions();
-    render();
-    
-    const now = new Date();
-    document.getElementById('lastUpdate').textContent = 
-      `Última actualización: ${now.toLocaleTimeString()}`;
-    showToast(`✅ Datos cargados: ${state.maestro.length} CECOs, ${state.ingresos.length} ingresos`);
-    
-  } catch (error) {
-    console.error('Error:', error);
-    showToast(`❌ Error: ${error.message}`);
-    document.getElementById('loadingState').innerHTML = `
-      <div style="font-size:32px;">⚠️</div>
-      <h3>Error al cargar los datos</h3>
-      <p>${error.message}</p>
-      <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
-        Verifica que:<br>
-        1. La API Key sea correcta<br>
-        2. La Sheets API esté habilitada en Google Cloud Console<br>
-        3. El archivo esté compartido con "Cualquiera con el enlace puede ver"
-      </p>
-      <button class="btn btn-primary" onclick="refreshData()">Reintentar</button>
-    `;
-  } finally {
-    isLoading = false;
-  }
-}
+                gapi.auth2.authorize({
+                    client_id: CONFIG.CLIENT_ID,
+                    scope: CONFIG.SCOPES,
+                    immediate: false, // Muestra la ventana de login
+                    include_granted_scopes: true,
+                    prompt: 'select_account' // Permite elegir cuenta
+                }, (authResult) => {
+                    if (authResult && !authResult.error) {
+                        authToken = authResult.access_token;
+                        updateLoginStatus('✅ Sesión iniciada correctamente.');
+                        resolve(authResult);
+                    } else {
+                        let errorMsg = 'Error al iniciar sesión.';
+                        if (authResult && authResult.error) {
+                            errorMsg += ` ${authResult.error}`;
+                            if (authResult.error === 'popup_closed_by_user') {
+                                errorMsg = 'Inicio de sesión cancelado.';
+                            } else if (authResult.error === 'access_denied') {
+                                errorMsg = 'Acceso denegado. Asegúrate de usar tu cuenta de Konecta.';
+                            }
+                        }
+                        updateLoginStatus(errorMsg, true);
+                        reject(new Error(errorMsg));
+                    }
+                });
+            });
+        }
 
-// ============================================================
-// 6. FUNCIÓN REFRESH - AHORA DEFINIDA CORRECTAMENTE
-// ============================================================
-window.refreshData = function() {
-  console.log('🔄 Refrescando datos...');
-  document.getElementById('loadingState').style.display = 'block';
-  document.getElementById('loadingState').innerHTML = `
-    <div style="font-size:32px;">🔄</div>
-    <h3>Recargando datos desde Google Sheets...</h3>
-    <p>Actualizando el dashboard</p>
-    <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
-      <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
-    </div>
-  `;
-  document.getElementById('mainContent').style.display = 'none';
-  Object.keys(charts).forEach(key => {
-    if (charts[key]) { charts[key].destroy(); delete charts[key]; }
-  });
-  loadAllData();
-};
+        // Función para cargar la biblioteca de Google y autenticar
+        function initOAuth() {
+            return new Promise((resolve, reject) => {
+                // Verificar si gapi ya está cargado
+                if (typeof gapi !== 'undefined' && gapi.auth2) {
+                    resolve();
+                    return;
+                }
 
-// También exponemos loadAllData globalmente para debug
-window.loadAllData = loadAllData;
+                // Cargar la biblioteca de autenticación
+                const script = document.createElement('script');
+                script.src = 'https://apis.google.com/js/api.js';
+                script.onload = () => {
+                    gapi.load('auth2', () => {
+                        resolve();
+                    });
+                };
+                script.onerror = () => {
+                    reject(new Error('No se pudo cargar la biblioteca de autenticación de Google.'));
+                };
+                document.head.appendChild(script);
+            });
+        }
 
-// ============================================================
-// 7. FUNCIONES DEL DASHBOARD
-// ============================================================
-function getFilteredMaestro(){
-  const cliente = document.getElementById('filterCliente').value;
-  const unidad = document.getElementById('filterUnidad').value;
-  const estado = document.getElementById('filterEstado').value;
-  return state.maestro.filter(m=>{
-    if(cliente && m.cliente !== cliente) return false;
-    if(unidad && m.unidad !== unidad) return false;
-    if(estado && m.estado !== estado) return false;
-    return true;
-  });
-}
+        // ============================================================
+        // 4. FUNCIÓN PARA LEER DATOS CON OAuth
+        // ============================================================
+        async function fetchSheetDataWithOAuth(sheetName) {
+            if (!authToken) {
+                throw new Error('No estás autenticado. Inicia sesión primero.');
+            }
 
-function ingresosFor(codigo){
-  return state.ingresos.filter(i=>i.codigo === codigo);
-}
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
 
-function totalIngresos(codigo){
-  return ingresosFor(codigo).reduce((s,i)=>s+i.importe,0);
-}
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
 
-function populateFilterOptions(){
-  const clientes = [...new Set(state.maestro.map(m=>m.cliente).filter(Boolean))].sort();
-  const unidades = [...new Set(state.maestro.map(m=>m.unidad).filter(Boolean))].sort();
-  const estados = [...new Set(state.maestro.map(m=>m.estado).filter(Boolean))].sort();
-  fillSelect('filterCliente', clientes);
-  fillSelect('filterUnidad', unidades);
-  fillSelect('filterEstado', estados);
-}
+                if (!response.ok) {
+                    let errorMsg = `Error ${response.status}`;
+                    const errorData = await response.json();
+                    if (errorData && errorData.error) {
+                        errorMsg += `: ${errorData.error.message || errorData.error.status}`;
+                    }
+                    if (response.status === 401 || response.status === 403) {
+                        errorMsg = 'Tu sesión ha expirado o no tienes permisos. Vuelve a iniciar sesión.';
+                        // Forzar re-autenticación
+                        authToken = null;
+                    }
+                    throw new Error(errorMsg);
+                }
 
-function fillSelect(id, values){
-  const sel = document.getElementById(id);
-  const allLabel = sel.options[0].textContent;
-  sel.innerHTML = `<option value="">${allLabel}</option>` + values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-}
+                const data = await response.json();
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+                if (!data.values || data.values.length === 0) {
+                    throw new Error(`La hoja "${sheetName}" está vacía o no tiene datos.`);
+                }
 
-function fmtEUR(n){
-  return new Intl.NumberFormat('es-ES', {style:'currency', currency:'EUR', maximumFractionDigits:0}).format(n||0);
-}
+                return data.values;
 
-function fmtPct(n){
-  return new Intl.NumberFormat('es-ES', {style:'percent', maximumFractionDigits:1}).format(n||0);
-}
+            } catch (error) {
+                console.error(`Error cargando hoja ${sheetName}:`, error);
+                throw error;
+            }
+        }
 
-function statusBadgeClass(estado){
-  const e = (estado||'').toLowerCase();
-  if(e.includes('negocia')) return 'badge-negociacion';
-  if(e.includes('cerrado')) return 'badge-cerrado';
-  return 'badge-activo';
-}
+        // ============================================================
+        // 5. FUNCIONES DE TRANSFORMACIÓN (igual que antes)
+        // ============================================================
+        function transformMaestroData(rawData) {
+            if (!rawData || rawData.length < 2) return [];
 
-function render(){
-  const filtered = getFilteredMaestro();
-  renderKpis(filtered);
-  renderTable(filtered);
-  renderEvolucionChart(filtered);
-  renderRepartoChart(filtered);
-}
+            const headers = rawData[0].map(h => String(h).trim());
 
-function renderKpis(filtered){
-  const totalIngresosSum = filtered.reduce((s,m)=>s+totalIngresos(m.codigo),0);
-  const totalPresupuesto = filtered.reduce((s,m)=>s+m.presupuestoIngresos,0);
-  const activos = filtered.filter(m=>(m.estado||'').toLowerCase().includes('activo')).length;
-  const pctAvance = totalPresupuesto > 0 ? totalIngresosSum/totalPresupuesto : null;
+            const idx = {
+                codigo: headers.indexOf('Código CECO'),
+                proyecto: headers.indexOf('Nombre Proyecto'),
+                cliente: headers.indexOf('Cliente'),
+                unidad: headers.indexOf('Unidad de Negocio'),
+                responsable: headers.indexOf('Responsable'),
+                fechaInicio: headers.indexOf('Fecha Inicio'),
+                fechaFin: headers.indexOf('Fecha Fin Prevista'),
+                estado: headers.indexOf('Estado'),
+                presupuestoIngresos: headers.indexOf('Presupuesto Ingresos Total (€)'),
+                presupuestoCostes: headers.indexOf('Presupuesto Costes Total (€)'),
+                notas: headers.indexOf('Notas')
+            };
 
-  const kpis = [
-    {label:'Ingresos facturados', value: fmtEUR(totalIngresosSum), accent:'', sub: filtered.length + ' CECOs en vista'},
-    {label:'Presupuesto total', value: fmtEUR(totalPresupuesto), accent:'accent-yellow', sub: totalPresupuesto ? '' : 'Sin presupuesto cargado'},
-    {label:'% avance s/presupuesto', value: pctAvance!==null ? fmtPct(pctAvance) : '—', accent: pctAvance!==null && pctAvance>=1 ? 'accent-green' : '', sub: 'Solo CECOs con presupuesto'},
-    {label:'CECOs activos', value: activos, accent:'accent-green', sub: filtered.length + ' totales en filtro'}
-  ];
+            const data = [];
+            for (let i = 1; i < rawData.length; i++) {
+                const row = rawData[i];
+                if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
 
-  document.getElementById('kpiGrid').innerHTML = kpis.map(k=>`
-    <div class="kpi ${k.accent}">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-value">${k.value}</div>
-      ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
-    </div>
-  `).join('');
-}
+                const codigo = String(row[idx.codigo] || '').trim();
+                if (!codigo) continue;
 
-function renderTable(filtered){
-  document.getElementById('tableCount').textContent = filtered.length + (filtered.length===1?' proyecto':' proyectos');
-  const tbody = document.getElementById('cecoTableBody');
-  if(filtered.length===0){
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px;">No hay CECOs que coincidan con los filtros.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = filtered.map(m=>{
-    const real = totalIngresos(m.codigo);
-    const pct = m.presupuestoIngresos > 0 ? Math.min(real/m.presupuestoIngresos,1) : null;
-    const margen = m.presupuestoIngresos > 0 ? (real - m.presupuestoCostes*(real/m.presupuestoIngresos)) : real;
-    return `
-    <tr>
-      <td><strong>${escapeHtml(m.codigo)}</strong></td>
-      <td>${escapeHtml(m.proyecto)}</td>
-      <td>${escapeHtml(m.cliente)}</td>
-      <td>${escapeHtml(m.unidad)}</td>
-      <td><span class="badge ${statusBadgeClass(m.estado)}">${escapeHtml(m.estado)}</span></td>
-      <td class="num">${m.presupuestoIngresos ? fmtEUR(m.presupuestoIngresos) : '—'}</td>
-      <td class="num">${fmtEUR(real)}</td>
-      <td>${pct!==null ? `<span class="bar-track"><span class="bar-fill ${pct>=1?'over':''}" style="width:${Math.round(pct*100)}%"></span></span>${Math.round(pct*100)}%` : '—'}</td>
-      <td class="num">${fmtEUR(margen)}</td>
-      <td><button class="row-edit-btn" data-codigo="${escapeHtml(m.codigo)}">Editar</button></td>
-    </tr>`;
-  }).join('');
+                data.push({
+                    codigo: codigo,
+                    proyecto: String(row[idx.proyecto] || '').trim(),
+                    cliente: String(row[idx.cliente] || '').trim(),
+                    unidad: String(row[idx.unidad] || '').trim(),
+                    responsable: String(row[idx.responsable] || '').trim(),
+                    fechaInicio: row[idx.fechaInicio] ? String(row[idx.fechaInicio]).split(' ')[0] : '',
+                    fechaFin: row[idx.fechaFin] ? String(row[idx.fechaFin]).split(' ')[0] : '',
+                    estado: String(row[idx.estado] || 'Activo').trim(),
+                    presupuestoIngresos: Number(row[idx.presupuestoIngresos]) || 0,
+                    presupuestoCostes: Number(row[idx.presupuestoCostes]) || 0,
+                    notas: String(row[idx.notas] || '').trim()
+                });
+            }
 
-  tbody.querySelectorAll('.row-edit-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=> openCecoModal(btn.dataset.codigo));
-  });
-}
+            return data;
+        }
 
-function renderEvolucionChart(filtered){
-  const codes = new Set(filtered.map(m=>m.codigo));
-  const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const realByMonth = MONTHS.map(mes => state.ingresos.filter(i=>codes.has(i.codigo) && i.mes===mes).reduce((s,i)=>s+i.importe,0));
-  const totalPresupuesto = filtered.reduce((s,m)=>s+m.presupuestoIngresos,0);
-  const previstoByMonth = MONTHS.map(()=> totalPresupuesto/12);
+        function transformIngresosData(rawData) {
+            if (!rawData || rawData.length < 2) return [];
 
-  const ctx = document.getElementById('chartEvolucion');
-  if(charts.evolucion) charts.evolucion.destroy();
-  charts.evolucion = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels: MONTHS,
-      datasets:[
-        {label:'Real', data: realByMonth, borderColor:'#185fa5', backgroundColor:'rgba(24,95,165,.08)', fill:true, tension:.25, pointRadius:3, borderWidth:2},
-        {label:'Previsto', data: previstoByMonth, borderColor:'#f2b705', borderDash:[6,4], fill:false, tension:.25, pointRadius:0, borderWidth:2}
-      ]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        y:{ticks:{callback:v=>fmtEUR(v)}, grid:{color:'#eef1f5'}},
-        x:{grid:{display:false}}
-      }
-    }
-  });
-}
+            const headers = rawData[0].map(h => String(h).trim());
 
-const PALETTE = ['#185fa5','#1baf7a','#eda100','#4a3aa7','#e34948','#e87ba4','#eb6834','#52514e'];
+            const idx = {
+                codigo: headers.indexOf('Código CECO'),
+                fecha: headers.indexOf('Fecha'),
+                mes: headers.indexOf('Mes'),
+                anio: headers.indexOf('Año'),
+                tipo: headers.indexOf('Tipo de Ingreso'),
+                concepto: headers.indexOf('Concepto / Descripción'),
+                importe: headers.indexOf('Importe (€)'),
+                factura: headers.indexOf('Nº Factura/Ref.'),
+                estadoCobro: headers.indexOf('Estado Cobro/Pago')
+            };
 
-function renderRepartoChart(filtered){
-  const sorted = filtered
-    .map(m=>({label:m.codigo, value: totalIngresos(m.codigo)}))
-    .filter(x=>x.value>0)
-    .sort((a,b)=>b.value-a.value);
-  const top = sorted.slice(0,7);
-  const restoSum = sorted.slice(7).reduce((s,x)=>s+x.value,0);
-  if(restoSum>0) top.push({label:'Otros', value:restoSum});
+            const data = [];
+            for (let i = 1; i < rawData.length; i++) {
+                const row = rawData[i];
+                if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
 
-  const ctx = document.getElementById('chartReparto');
-  if(charts.reparto) charts.reparto.destroy();
-  if(top.length===0){
-    ctx.getContext('2d').clearRect(0,0,ctx.width,ctx.height);
-    return;
-  }
-  charts.reparto = new Chart(ctx, {
-    type:'doughnut',
-    data:{
-      labels: top.map(t=>t.label),
-      datasets:[{data: top.map(t=>t.value), backgroundColor: PALETTE, borderColor:'#fff', borderWidth:2}]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}
-    }
-  });
-}
+                const codigo = String(row[idx.codigo] || '').trim();
+                const importe = Number(row[idx.importe]) || 0;
 
-function openCecoModal(codigo){
-  const m = codigo ? state.maestro.find(x=>x.codigo===codigo) : null;
-  const isNew = !m;
-  const data = m || {codigo:'', proyecto:'', cliente:'', unidad:'', responsable:'', estado:'Activo', presupuestoIngresos:0, presupuestoCostes:0, notas:''};
+                if (!codigo || importe === 0) continue;
 
-  const root = document.getElementById('modalRoot');
-  root.innerHTML = `
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h3>${isNew ? 'Nuevo CECO' : 'Editar ' + escapeHtml(data.codigo)}</h3>
-      <div class="field"><label>Código CECO</label><input id="f_codigo" value="${escapeHtml(data.codigo)}" ${isNew?'':'readonly'}></div>
-      <div class="field"><label>Nombre del proyecto</label><input id="f_proyecto" value="${escapeHtml(data.proyecto)}"></div>
-      <div class="field"><label>Cliente</label><input id="f_cliente" value="${escapeHtml(data.cliente)}"></div>
-      <div class="field"><label>Unidad de negocio</label><input id="f_unidad" value="${escapeHtml(data.unidad)}"></div>
-      <div class="field"><label>Estado</label>
-        <select id="f_estado">
-          <option ${data.estado==='Activo'?'selected':''}>Activo</option>
-          <option ${data.estado==='En negociación'?'selected':''}>En negociación</option>
-          <option ${data.estado==='Cerrado'?'selected':''}>Cerrado</option>
-        </select>
-      </div>
-      <div class="field"><label>Presupuesto de ingresos (€)</label><input id="f_presIngresos" type="number" value="${data.presupuestoIngresos||0}"></div>
-      <div class="field"><label>Presupuesto de costes (€)</label><input id="f_presCostes" type="number" value="${data.presupuestoCostes||0}"></div>
-      <div class="modal-actions">
-        ${!isNew ? `<button class="btn-secondary" id="deleteCecoBtn" style="color:#d04848;border-color:#f0c9c9;margin-right:auto;">Eliminar</button>` : ''}
-        <button class="btn-secondary" id="cancelModal">Cancelar</button>
-        <button class="btn-save" id="saveCecoBtn">Guardar</button>
-      </div>
-    </div>
-  </div>`;
+                data.push({
+                    codigo: codigo,
+                    fecha: row[idx.fecha] ? String(row[idx.fecha]).split(' ')[0] : '',
+                    mes: String(row[idx.mes] || '').trim(),
+                    anio: Number(row[idx.anio]) || 2026,
+                    tipo: String(row[idx.tipo] || '').trim(),
+                    concepto: String(row[idx.concepto] || '').trim(),
+                    importe: importe,
+                    factura: String(row[idx.factura] || '').trim(),
+                    estadoCobro: String(row[idx.estadoCobro] || '').trim()
+                });
+            }
 
-  document.getElementById('cancelModal').addEventListener('click', closeModal);
-  document.getElementById('modalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='modalOverlay') closeModal(); });
-  document.getElementById('saveCecoBtn').addEventListener('click', async ()=>{
-    const newCodigo = document.getElementById('f_codigo').value.trim();
-    if(!newCodigo){ showToast('El código de CECO es obligatorio.'); return; }
-    if(isNew && state.maestro.some(x=>x.codigo===newCodigo)){ showToast('Ya existe un CECO con ese código.'); return; }
+            return data;
+        }
 
-    const payload = {
-      codigo: newCodigo,
-      proyecto: document.getElementById('f_proyecto').value.trim(),
-      cliente: document.getElementById('f_cliente').value.trim(),
-      unidad: document.getElementById('f_unidad').value.trim(),
-      responsable: data.responsable || '',
-      fechaInicio: data.fechaInicio || '',
-      fechaFin: data.fechaFin || '',
-      estado: document.getElementById('f_estado').value,
-      presupuestoIngresos: Number(document.getElementById('f_presIngresos').value) || 0,
-      presupuestoCostes: Number(document.getElementById('f_presCostes').value) || 0,
-      notas: data.notas || ''
-    };
+        // ============================================================
+        // 6. FUNCIÓN PRINCIPAL DE CARGA
+        // ============================================================
+        async function loadAllData() {
+            if (isLoading) return;
+            if (!authToken) {
+                showToast('❌ Necesitas iniciar sesión primero.');
+                return;
+            }
 
-    if(isNew){
-      state.maestro.push(payload);
-    } else {
-      const idx = state.maestro.findIndex(x=>x.codigo===codigo);
-      state.maestro[idx] = payload;
-    }
-    populateFilterOptions();
-    render();
-    closeModal();
-    showToast(isNew ? 'CECO creado (solo en memoria)' : 'Cambios guardados (solo en memoria)');
-  });
+            isLoading = true;
+            const loadingBar = document.getElementById('loadingBar');
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'none';
 
-  if(!isNew){
-    document.getElementById('deleteCecoBtn').addEventListener('click', async ()=>{
-      state.maestro = state.maestro.filter(x=>x.codigo!==codigo);
-      populateFilterOptions();
-      render();
-      closeModal();
-      showToast('CECO eliminado (solo en memoria)');
-    });
-  }
-}
+            try {
+                loadingBar.style.width = '10%';
+                console.log('Cargando Maestro_CECOs...');
+                const rawMaestro = await fetchSheetDataWithOAuth(CONFIG.SHEETS.maestro);
+                loadingBar.style.width = '40%';
+                state.maestro = transformMaestroData(rawMaestro);
+                console.log(`✅ Maestro cargado: ${state.maestro.length} CECOs`);
 
-function closeModal(){
-  document.getElementById('modalRoot').innerHTML = '';
-}
+                loadingBar.style.width = '70%';
+                console.log('Cargando Ingresos...');
+                const rawIngresos = await fetchSheetDataWithOAuth(CONFIG.SHEETS.ingresos);
+                state.ingresos = transformIngresosData(rawIngresos);
+                console.log(`✅ Ingresos cargados: ${state.ingresos.length} registros`);
 
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(()=>{ t.style.display='none'; }, 2600);
-}
+                loadingBar.style.width = '100%';
 
-// ============================================================
-// 8. INICIALIZACIÓN
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 Inicializando dashboard...');
-  
-  document.getElementById('filterCliente').addEventListener('change', render);
-  document.getElementById('filterUnidad').addEventListener('change', render);
-  document.getElementById('filterEstado').addEventListener('change', render);
-  document.getElementById('resetFilters').addEventListener('click', ()=>{
-    document.getElementById('filterCliente').value='';
-    document.getElementById('filterUnidad').value='';
-    document.getElementById('filterEstado').value='';
-    render();
-  });
-  
-  // Iniciar carga de datos
-  loadAllData();
-});
+                if (state.maestro.length === 0) {
+                    throw new Error('No se encontraron CECOs. Verifica que la hoja Maestro_CECOs tenga datos.');
+                }
 
-console.log('✅ Script cargado correctamente');
-console.log('🔑 API Key configurada:', CONFIG.API_KEY ? 'Sí' : 'No');
-console.log('📊 Spreadsheet ID:', CONFIG.SPREADSHEET_ID);
-</script>
+                // Mostrar dashboard
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+                populateFilterOptions();
+                render();
+
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent =
+                    `Última actualización: ${now.toLocaleTimeString()}`;
+                showToast(`✅ Datos cargados: ${state.maestro.length} CECOs, ${state.ingresos.length} ingresos`);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(`❌ Error: ${error.message}`);
+                document.getElementById('loadingState').innerHTML = `
+                    <div style="font-size:32px;">⚠️</div>
+                    <h3>Error al cargar los datos</h3>
+                    <p>${error.message}</p>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+                        Asegúrate de que:<br>
+                        1. Tu sesión de Google esté activa<br>
+                        2. El archivo esté compartido con tu cuenta de Konecta<br>
+                        3. Tengas permisos de lectura en el archivo
+                    </p>
+                    <button class="btn btn-primary" onclick="window.refreshData()">Reintentar</button>
+                `;
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // ============================================================
+        // 7. FUNCIÓN REFRESH
+        // ============================================================
+        window.refreshData = function() {
+            console.log('🔄 Refrescando datos...');
+            if (!authToken) {
+                showToast('❌ Tu sesión ha expirado. Inicia sesión nuevamente.');
+                document.getElementById('loginContainer').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('loadingState').style.display = 'none';
+                return;
+            }
+            // Resetear el estado de carga
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('loadingState').innerHTML = `
+                <div style="font-size:32px;">🔄</div>
+                <h3>Recargando datos desde Google Sheets...</h3>
+                <p>Actualizando el dashboard</p>
+                <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
+                    <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
+                </div>
+            `;
+            document.getElementById('mainContent').style.display = 'none';
+            Object.keys(charts).forEach(key => {
+                if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+            });
+            loadAllData();
+        };
+
+        // ============================================================
+        // 8. FUNCIONES DEL DASHBOARD (TODAS TUS FUNCIONES EXISTENTES)
+        // ============================================================
+        function getFilteredMaestro() {
+            const cliente = document.getElementById('filterCliente').value;
+            const unidad = document.getElementById('filterUnidad').value;
+            const estado = document.getElementById('filterEstado').value;
+            return state.maestro.filter(m => {
+                if (cliente && m.cliente !== cliente) return false;
+                if (unidad && m.unidad !== unidad) return false;
+                if (estado && m.estado !== estado) return false;
+                return true;
+            });
+        }
+
+        function ingresosFor(codigo) {
+            return state.ingresos.filter(i => i.codigo === codigo);
+        }
+
+        function totalIngresos(codigo) {
+            return ingresosFor(codigo).reduce((s, i) => s + i.importe, 0);
+        }
+
+        function populateFilterOptions() {
+            const clientes = [...new Set(state.maestro.map(m => m.cliente).filter(Boolean))].sort();
+            const unidades = [...new Set(state.maestro.map(m => m.unidad).filter(Boolean))].sort();
+            const estados = [...new Set(state.maestro.map(m => m.estado).filter(Boolean))].sort();
+            fillSelect('filterCliente', clientes);
+            fillSelect('filterUnidad', unidades);
+            fillSelect('filterEstado', estados);
+        }
+
+        function fillSelect(id, values) {
+            const sel = document.getElementById(id);
+            const allLabel = sel.options[0].textContent;
+            sel.innerHTML = `<option value="">${allLabel}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c]));
+        }
+
+        function fmtEUR(n) {
+            return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
+        }
+
+        function fmtPct(n) {
+            return new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 }).format(n || 0);
+        }
+
+        function statusBadgeClass(estado) {
+            const e = (estado || '').toLowerCase();
+            if (e.includes('negocia')) return 'badge-negociacion';
+            if (e.includes('cerrado')) return 'badge-cerrado';
+            return 'badge-activo';
+        }
+
+        function render() {
+            const filtered = getFilteredMaestro();
+            renderKpis(filtered);
+            renderTable(filtered);
+            renderEvolucionChart(filtered);
+            renderRepartoChart(filtered);
+        }
+
+        function renderKpis(filtered) {
+            const totalIngresosSum = filtered.reduce((s, m) => s + totalIngresos(m.codigo), 0);
+            const totalPresupuesto = filtered.reduce((s, m) => s + m.presupuestoIngresos, 0);
+            const activos = filtered.filter(m => (m.estado || '').toLowerCase().includes('activo')).length;
+            const pctAvance = totalPresupuesto > 0 ? totalIngresosSum / totalPresupuesto : null;
+
+            const kpis = [
+                { label: 'Ingresos facturados', value: fmtEUR(totalIngresosSum), accent: '', sub: filtered.length + ' CECOs en vista' },
+                { label: 'Presupuesto total', value: fmtEUR(totalPresupuesto), accent: 'accent-yellow', sub: totalPresupuesto ? '' : 'Sin presupuesto cargado' },
+                { label: '% avance s/presupuesto', value: pctAvance !== null ? fmtPct(pctAvance) : '—', accent: pctAvance !== null && pctAvance >= 1 ? 'accent-green' : '', sub: 'Solo CECOs con presupuesto' },
+                { label: 'CECOs activos', value: activos, accent: 'accent-green', sub: filtered.length + ' totales en filtro' }
+            ];
+
+            document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+                <div class="kpi ${k.accent}">
+                    <div class="kpi-label">${k.label}</div>
+                    <div class="kpi-value">${k.value}</div>
+                    ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderTable(filtered) {
+            document.getElementById('tableCount').textContent = filtered.length + (filtered.length === 1 ? ' proyecto' : ' proyectos');
+            const tbody = document.getElementById('cecoTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px;">No hay CECOs que coincidan con los filtros.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(m => {
+                const real = totalIngresos(m.codigo);
+                const pct = m.presupuestoIngresos > 0 ? Math.min(real / m.presupuestoIngresos, 1) : null;
+                const margen = m.presupuestoIngresos > 0 ? (real - m.presupuestoCostes * (real / m.presupuestoIngresos)) : real;
+                return `
+                <tr>
+                    <td><strong>${escapeHtml(m.codigo)}</strong></td>
+                    <td>${escapeHtml(m.proyecto)}</td>
+                    <td>${escapeHtml(m.cliente)}</td>
+                    <td>${escapeHtml(m.unidad)}</td>
+                    <td><span class="badge ${statusBadgeClass(m.estado)}">${escapeHtml(m.estado)}</span></td>
+                    <td class="num">${m.presupuestoIngresos ? fmtEUR(m.presupuestoIngresos) : '—'}</td>
+                    <td class="num">${fmtEUR(real)}</td>
+                    <td>${pct!==null ? `<span class="bar-track"><span class="bar-fill ${pct>=1?'over':''}" style="width:${Math.round(pct*100)}%"></span></span>${Math.round(pct*100)}%` : '—'}</td>
+                    <td class="num">${fmtEUR(margen)}</td>
+                    <td><button class="row-edit-btn" data-codigo="${escapeHtml(m.codigo)}">Editar</button></td>
+                </tr>`;
+            }).join('');
+
+            tbody.querySelectorAll('.row-edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => openCecoModal(btn.dataset.codigo));
+            });
+        }
+
+        function renderEvolucionChart(filtered) {
+            const codes = new Set(filtered.map(m => m.codigo));
+            const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const realByMonth = MONTHS.map(mes => state.ingresos.filter(i => codes.has(i.codigo) && i.mes === mes).reduce((s, i) => s + i.importe, 0));
+            const totalPresupuesto = filtered.reduce((s, m) => s + m.presupuestoIngresos, 0);
+            const previstoByMonth = MONTHS.map(() => totalPresupuesto / 12);
+
+            const ctx = document.getElementById('chartEvolucion');
+            if (charts.evolucion) charts.evolucion.destroy();
+            charts.evolucion = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: MONTHS,
+                    datasets: [
+                        { label: 'Real', data: realByMonth, borderColor: '#185fa5', backgroundColor: 'rgba(24,95,165,.08)', fill: true, tension: .25, pointRadius: 3, borderWidth: 2 },
+                        { label: 'Previsto', data: previstoByMonth, borderColor: '#f2b705', borderDash: [6, 4], fill: false, tension: .25, pointRadius: 0, borderWidth: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { callback: v => fmtEUR(v) }, grid: { color: '#eef1f5' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        const PALETTE = ['#185fa5', '#1baf7a', '#eda100', '#4a3aa7', '#e34948', '#e87ba4', '#eb6834', '#52514e'];
+
+        function renderRepartoChart(filtered) {
+            const sorted = filtered
+                .map(m => ({ label: m.codigo, value: totalIngresos(m.codigo) }))
+                .filter(x => x.value > 0)
+                .sort((a, b) => b.value - a.value);
+            const top = sorted.slice(0, 7);
+            const restoSum = sorted.slice(7).reduce((s, x) => s + x.value, 0);
+            if (restoSum > 0) top.push({ label: 'Otros', value: restoSum });
+
+            const ctx = document.getElementById('chartReparto');
+            if (charts.reparto) charts.reparto.destroy();
+            if (top.length === 0) {
+                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+                return;
+            }
+            charts.reparto = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: top.map(t => t.label),
+                    datasets: [{ data: top.map(t => t.value), backgroundColor: PALETTE, borderColor: '#fff', borderWidth: 2 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }
+                }
+            });
+        }
+
+        // ============================================================
+        // 9. MODAL DE EDICIÓN (SIN CAMBIOS)
+        // ============================================================
+        function openCecoModal(codigo) {
+            const m = codigo ? state.maestro.find(x => x.codigo === codigo) : null;
+            const isNew = !m;
+            const data = m || { codigo: '', proyecto: '', cliente: '', unidad: '', responsable: '', estado: 'Activo', presupuestoIngresos: 0, presupuestoCostes: 0, notas: '' };
+
+            const root = document.getElementById('modalRoot');
+            root.innerHTML = `
+            <div class="modal-overlay" id="modalOverlay">
+                <div class="modal">
+                    <h3>${isNew ? 'Nuevo CECO' : 'Editar ' + escapeHtml(data.codigo)}</h3>
+                    <div class="field"><label>Código CECO</label><input id="f_codigo" value="${escapeHtml(data.codigo)}" ${isNew?'':'readonly'}></div>
+                    <div class="field"><label>Nombre del proyecto</label><input id="f_proyecto" value="${escapeHtml(data.proyecto)}"></div>
+                    <div class="field"><label>Cliente</label><input id="f_cliente" value="${escapeHtml(data.cliente)}"></div>
+                    <div class="field"><label>Unidad de negocio</label><input id="f_unidad" value="${escapeHtml(data.unidad)}"></div>
+                    <div class="field"><label>Estado</label>
+                        <select id="f_estado">
+                            <option ${data.estado==='Activo'?'selected':''}>Activo</option>
+                            <option ${data.estado==='En negociación'?'selected':''}>En negociación</option>
+                            <option ${data.estado==='Cerrado'?'selected':''}>Cerrado</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>Presupuesto de ingresos (€)</label><input id="f_presIngresos" type="number" value="${data.presupuestoIngresos||0}"></div>
+                    <div class="field"><label>Presupuesto de costes (€)</label><input id="f_presCostes" type="number" value="${data.presupuestoCostes||0}"></div>
+                    <div class="modal-actions">
+                        ${!isNew ? `<button class="btn-secondary" id="deleteCecoBtn" style="color:#d04848;border-color:#f0c9c9;margin-right:auto;">Eliminar</button>` : ''}
+                        <button class="btn-secondary" id="cancelModal">Cancelar</button>
+                        <button class="btn-save" id="saveCecoBtn">Guardar</button>
+                    </div>
+                </div>
+            </div>`;
+
+            document.getElementById('cancelModal').addEventListener('click', closeModal);
+            document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target.id === 'modalOverlay') closeModal(); });
+            document.getElementById('saveCecoBtn').addEventListener('click', async () => {
+                const newCodigo = document.getElementById('f_codigo').value.trim();
+                if (!newCodigo) { showToast('El código de CECO es obligatorio.'); return; }
+                if (isNew && state.maestro.some(x => x.codigo === newCodigo)) { showToast('Ya existe un CECO con ese código.'); return; }
+
+                const payload = {
+                    codigo: newCodigo,
+                    proyecto: document.getElementById('f_proyecto').value.trim(),
+                    cliente: document.getElementById('f_cliente').value.trim(),
+                    unidad: document.getElementById('f_unidad').value.trim(),
+                    responsable: data.responsable || '',
+                    fechaInicio: data.fechaInicio || '',
+                    fechaFin: data.fechaFin || '',
+                    estado: document.getElementById('f_estado').value,
+                    presupuestoIngresos: Number(document.getElementById('f_presIngresos').value) || 0,
+                    presupuestoCostes: Number(document.getElementById('f_presCostes').value) || 0,
+                    notas: data.notas || ''
+                };
+
+                if (isNew) {
+                    state.maestro.push(payload);
+                } else {
+                    const idx = state.maestro.findIndex(x => x.codigo === codigo);
+                    state.maestro[idx] = payload;
+                }
+                populateFilterOptions();
+                render();
+                closeModal();
+                showToast(isNew ? 'CECO creado (solo en memoria)' : 'Cambios guardados (solo en memoria)');
+            });
+
+            if (!isNew) {
+                document.getElementById('deleteCecoBtn').addEventListener('click', async () => {
+                    state.maestro = state.maestro.filter(x => x.codigo !== codigo);
+                    populateFilterOptions();
+                    render();
+                    closeModal();
+                    showToast('CECO eliminado (solo en memoria)');
+                });
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modalRoot').innerHTML = '';
+        }
+
+        // ============================================================
+        // 10. INICIALIZACIÓN PRINCIPAL
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Inicializando dashboard con OAuth 2.0...');
+
+            // Configurar eventos de filtros
+            document.getElementById('filterCliente').addEventListener('change', render);
+            document.getElementById('filterUnidad').addEventListener('change', render);
+            document.getElementById('filterEstado').addEventListener('change', render);
+            document.getElementById('resetFilters').addEventListener('click', () => {
+                document.getElementById('filterCliente').value = '';
+                document.getElementById('filterUnidad').value = '';
+                document.getElementById('filterEstado').value = '';
+                render();
+            });
+
+            // Configurar botón de login
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.addEventListener('click', async () => {
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Conectando...';
+                try {
+                    await initOAuth();
+                    await authenticateUser();
+                    // Ocultar login, mostrar loading y cargar datos
+                    document.getElementById('loginContainer').style.display = 'none';
+                    await loadAllData();
+                } catch (error) {
+                    console.error('Error en login:', error);
+                    showToast(`❌ ${error.message}`);
+                    loginBtn.textContent = 'Reintentar';
+                    loginBtn.disabled = false;
+                }
+            });
+
+            // Verificar si el usuario ya está autenticado (carga de la biblioteca)
+            // Cargar la biblioteca de Google en segundo plano
+            initOAuth().then(() => {
+                console.log('✅ Biblioteca de Google lista para usar.');
+                // Verificar si ya hay una sesión activa (para autologin)
+                // Nota: Esto requiere que el usuario haya dado permiso previamente
+            }).catch(error => {
+                console.warn('⚠️ Error al cargar biblioteca de Google:', error);
+                updateLoginStatus('⚠️ No se pudo cargar la biblioteca de autenticación. Verifica tu conexión.', true);
+            });
+        });
+
+        console.log('✅ Script OAuth 2.0 cargado correctamente.');
+    </script>
 </body>
 </html>
