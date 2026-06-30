@@ -713,4 +713,153 @@ function renderEvolucionChart(filtered){
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
-        y:{ticks:{callback:v=>fmt
+        y:{ticks:{callback:v=>fmtEUR(v)}, grid:{color:'#eef1f5'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+const PALETTE = ['#185fa5','#1baf7a','#eda100','#4a3aa7','#e34948','#e87ba4','#eb6834','#52514e'];
+
+function renderRepartoChart(filtered){
+  const sorted = filtered
+    .map(m=>({label:m.codigo, value: totalIngresos(m.codigo)}))
+    .filter(x=>x.value>0)
+    .sort((a,b)=>b.value-a.value);
+  const top = sorted.slice(0,7);
+  const restoSum = sorted.slice(7).reduce((s,x)=>s+x.value,0);
+  if(restoSum>0) top.push({label:'Otros', value:restoSum});
+
+  const ctx = document.getElementById('chartReparto');
+  if(charts.reparto) charts.reparto.destroy();
+  if(top.length===0){
+    ctx.getContext('2d').clearRect(0,0,ctx.width,ctx.height);
+    return;
+  }
+  charts.reparto = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels: top.map(t=>t.label),
+      datasets:[{data: top.map(t=>t.value), backgroundColor: PALETTE, borderColor:'#fff', borderWidth:2}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}
+    }
+  });
+}
+
+function openCecoModal(codigo){
+  const m = codigo ? state.maestro.find(x=>x.codigo===codigo) : null;
+  const isNew = !m;
+  const data = m || {codigo:'', proyecto:'', cliente:'', unidad:'', responsable:'', estado:'Activo', presupuestoIngresos:0, presupuestoCostes:0, notas:''};
+
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3>${isNew ? 'Nuevo CECO' : 'Editar ' + escapeHtml(data.codigo)}</h3>
+      <div class="field"><label>Código CECO</label><input id="f_codigo" value="${escapeHtml(data.codigo)}" ${isNew?'':'readonly'}></div>
+      <div class="field"><label>Nombre del proyecto</label><input id="f_proyecto" value="${escapeHtml(data.proyecto)}"></div>
+      <div class="field"><label>Cliente</label><input id="f_cliente" value="${escapeHtml(data.cliente)}"></div>
+      <div class="field"><label>Unidad de negocio</label><input id="f_unidad" value="${escapeHtml(data.unidad)}"></div>
+      <div class="field"><label>Estado</label>
+        <select id="f_estado">
+          <option ${data.estado==='Activo'?'selected':''}>Activo</option>
+          <option ${data.estado==='En negociación'?'selected':''}>En negociación</option>
+          <option ${data.estado==='Cerrado'?'selected':''}>Cerrado</option>
+        </select>
+      </div>
+      <div class="field"><label>Presupuesto de ingresos (€)</label><input id="f_presIngresos" type="number" value="${data.presupuestoIngresos||0}"></div>
+      <div class="field"><label>Presupuesto de costes (€)</label><input id="f_presCostes" type="number" value="${data.presupuestoCostes||0}"></div>
+      <div class="modal-actions">
+        ${!isNew ? `<button class="btn-secondary" id="deleteCecoBtn" style="color:#d04848;border-color:#f0c9c9;margin-right:auto;">Eliminar</button>` : ''}
+        <button class="btn-secondary" id="cancelModal">Cancelar</button>
+        <button class="btn-save" id="saveCecoBtn">Guardar</button>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('cancelModal').addEventListener('click', closeModal);
+  document.getElementById('modalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='modalOverlay') closeModal(); });
+  document.getElementById('saveCecoBtn').addEventListener('click', async ()=>{
+    const newCodigo = document.getElementById('f_codigo').value.trim();
+    if(!newCodigo){ showToast('El código de CECO es obligatorio.'); return; }
+    if(isNew && state.maestro.some(x=>x.codigo===newCodigo)){ showToast('Ya existe un CECO con ese código.'); return; }
+
+    const payload = {
+      codigo: newCodigo,
+      proyecto: document.getElementById('f_proyecto').value.trim(),
+      cliente: document.getElementById('f_cliente').value.trim(),
+      unidad: document.getElementById('f_unidad').value.trim(),
+      responsable: data.responsable || '',
+      fechaInicio: data.fechaInicio || '',
+      fechaFin: data.fechaFin || '',
+      estado: document.getElementById('f_estado').value,
+      presupuestoIngresos: Number(document.getElementById('f_presIngresos').value) || 0,
+      presupuestoCostes: Number(document.getElementById('f_presCostes').value) || 0,
+      notas: data.notas || ''
+    };
+
+    if(isNew){
+      state.maestro.push(payload);
+    } else {
+      const idx = state.maestro.findIndex(x=>x.codigo===codigo);
+      state.maestro[idx] = payload;
+    }
+    populateFilterOptions();
+    render();
+    closeModal();
+    showToast(isNew ? 'CECO creado (solo en memoria)' : 'Cambios guardados (solo en memoria)');
+  });
+
+  if(!isNew){
+    document.getElementById('deleteCecoBtn').addEventListener('click', async ()=>{
+      state.maestro = state.maestro.filter(x=>x.codigo!==codigo);
+      populateFilterOptions();
+      render();
+      closeModal();
+      showToast('CECO eliminado (solo en memoria)');
+    });
+  }
+}
+
+function closeModal(){
+  document.getElementById('modalRoot').innerHTML = '';
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.display='none'; }, 2600);
+}
+
+// ============================================================
+// 8. INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 Inicializando dashboard...');
+  
+  document.getElementById('filterCliente').addEventListener('change', render);
+  document.getElementById('filterUnidad').addEventListener('change', render);
+  document.getElementById('filterEstado').addEventListener('change', render);
+  document.getElementById('resetFilters').addEventListener('click', ()=>{
+    document.getElementById('filterCliente').value='';
+    document.getElementById('filterUnidad').value='';
+    document.getElementById('filterEstado').value='';
+    render();
+  });
+  
+  // Iniciar carga de datos
+  loadAllData();
+});
+
+console.log('✅ Script cargado correctamente');
+console.log('🔑 API Key configurada:', CONFIG.API_KEY ? 'Sí' : 'No');
+console.log('📊 Spreadsheet ID:', CONFIG.SPREADSHEET_ID);
+</script>
+</body>
+</html>
