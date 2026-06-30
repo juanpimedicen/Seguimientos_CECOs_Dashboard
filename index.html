@@ -249,7 +249,7 @@ tbody tr:hover{background:#f8fafc;}
     </div>
   </div>
   <div class="topbar-actions">
-    <button class="btn btn-light" id="refreshBtn" onclick="refreshData()">🔄 Actualizar datos</button>
+    <button class="btn btn-light" id="refreshBtn" onclick="window.refreshData()">🔄 Actualizar datos</button>
     <span id="lastUpdate" style="font-size:12px;color:rgba(255,255,255,0.7);margin-right:8px;"></span>
   </div>
 </div>
@@ -348,13 +348,8 @@ tbody tr:hover{background:#f8fafc;}
 // 1. CONFIGURACIÓN - Google Sheets API
 // ============================================================
 const CONFIG = {
-  // ⚠️ REEMPLAZA CON TU API KEY (la que creaste en Google Cloud Console)
   API_KEY: 'AIzaSyCVSPO17GEJoOCH7RZh2x8yJtzMRF69nNc',
-  
-  // ID del archivo de Google Sheets (está en la URL)
   SPREADSHEET_ID: '1zy-ELL3npMiGuwjuZVfKtdBm8xtlP4x0',
-  
-  // Nombres de las hojas (deben coincidir exactamente)
   SHEETS: {
     maestro: 'Maestro_CECOs',
     ingresos: 'Ingresos'
@@ -374,6 +369,8 @@ let isLoading = false;
 async function fetchSheetData(sheetName) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?key=${CONFIG.API_KEY}`;
   
+  console.log('Fetching:', url); // Para depuración
+  
   try {
     const response = await fetch(url);
     
@@ -389,7 +386,6 @@ async function fetchSheetData(sheetName) {
     
     const data = await response.json();
     
-    // Verificar si hay datos
     if (!data.values || data.values.length === 0) {
       throw new Error(`La hoja "${sheetName}" está vacía o no tiene datos.`);
     }
@@ -405,28 +401,11 @@ async function fetchSheetData(sheetName) {
 // ============================================================
 // 4. FUNCIONES DE TRANSFORMACIÓN DE DATOS
 // ============================================================
-function parseSheetRow(row, headers) {
-  const obj = {};
-  headers.forEach((header, index) => {
-    let value = row[index] || '';
-    // Intentar convertir a número
-    if (!isNaN(value) && value !== '') {
-      obj[header] = Number(value);
-    } else {
-      obj[header] = value;
-    }
-  });
-  return obj;
-}
-
 function transformMaestroData(rawData) {
-  // rawData es un array de arrays desde Google Sheets
   if (!rawData || rawData.length < 2) return [];
   
-  // La primera fila son los headers
   const headers = rawData[0].map(h => String(h).trim());
   
-  // Buscar índices de columnas clave
   const idx = {
     codigo: headers.indexOf('Código CECO'),
     proyecto: headers.indexOf('Nombre Proyecto'),
@@ -444,7 +423,6 @@ function transformMaestroData(rawData) {
   const data = [];
   for (let i = 1; i < rawData.length; i++) {
     const row = rawData[i];
-    // Saltar filas vacías
     if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
     
     const codigo = String(row[idx.codigo] || '').trim();
@@ -521,16 +499,17 @@ async function loadAllData() {
   
   try {
     loadingBar.style.width = '10%';
-    
-    // Cargar Maestro
+    console.log('Cargando Maestro_CECOs...');
     const rawMaestro = await fetchSheetData(CONFIG.SHEETS.maestro);
     loadingBar.style.width = '40%';
     state.maestro = transformMaestroData(rawMaestro);
+    console.log(`✅ Maestro cargado: ${state.maestro.length} CECOs`);
     
-    // Cargar Ingresos
-    const rawIngresos = await fetchSheetData(CONFIG.SHEETS.ingresos);
     loadingBar.style.width = '70%';
+    console.log('Cargando Ingresos...');
+    const rawIngresos = await fetchSheetData(CONFIG.SHEETS.ingresos);
     state.ingresos = transformIngresosData(rawIngresos);
+    console.log(`✅ Ingresos cargados: ${state.ingresos.length} registros`);
     
     loadingBar.style.width = '100%';
     
@@ -570,7 +549,11 @@ async function loadAllData() {
   }
 }
 
-function refreshData() {
+// ============================================================
+// 6. FUNCIÓN REFRESH - AHORA DEFINIDA CORRECTAMENTE
+// ============================================================
+window.refreshData = function() {
+  console.log('🔄 Refrescando datos...');
   document.getElementById('loadingState').style.display = 'block';
   document.getElementById('loadingState').innerHTML = `
     <div style="font-size:32px;">🔄</div>
@@ -585,10 +568,13 @@ function refreshData() {
     if (charts[key]) { charts[key].destroy(); delete charts[key]; }
   });
   loadAllData();
-}
+};
+
+// También exponemos loadAllData globalmente para debug
+window.loadAllData = loadAllData;
 
 // ============================================================
-// 6. FUNCIONES DEL DASHBOARD (tus funciones existentes)
+// 7. FUNCIONES DEL DASHBOARD
 // ============================================================
 function getFilteredMaestro(){
   const cliente = document.getElementById('filterCliente').value;
@@ -727,11 +713,4 @@ function renderEvolucionChart(filtered){
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
-        y:{ticks:{callback:v=>fmtEUR(v)}, grid:{color:'#eef1f5'}},
-        x:{grid:{display:false}}
-      }
-    }
-  });
-}
-
-const PALETTE = ['#185
+        y:{ticks:{callback:v=>fmt
