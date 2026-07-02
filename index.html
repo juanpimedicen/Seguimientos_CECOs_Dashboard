@@ -1,1028 +1,893 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seguimiento CECOs · Konecta (Live con OAuth)</title>
-    <!-- Google API Client Library para autenticación OAuth 2.0 -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-    <style>
-        /* ============================================================
-           TODOS TUS ESTILOS EXISTENTES - Coloca aquí todo tu CSS
-           ============================================================ */
-        :root{
-          --navy:#0c2547;
-          --navy-2:#13325c;
-          --blue:#185fa5;
-          --blue-light:#378ADD;
-          --yellow:#f2b705;
-          --yellow-dark:#c98e00;
-          --bg:#f4f6f9;
-          --card:#ffffff;
-          --border:#e3e7ee;
-          --border-strong:#cdd4df;
-          --text:#16233a;
-          --text-secondary:#5a6678;
-          --text-muted:#8993a3;
-          --green:#1d9e75;
-          --green-bg:#e1f5ee;
-          --red:#d04848;
-          --red-bg:#fbeaea;
-          --amber:#c98500;
-          --amber-bg:#fdf2dd;
-          --radius:10px;
-          --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        *{box-sizing:border-box;}
-        body{
-          margin:0;
-          font-family:var(--font);
-          background:var(--bg);
-          color:var(--text);
-          -webkit-font-smoothing:antialiased;
-        }
-        .topbar{
-          background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
-          color:#fff;
-          padding:20px 32px;
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          flex-wrap:wrap;
-          gap:16px;
-        }
-        .brand{display:flex;align-items:center;gap:14px;}
-        .brand-mark{
-          width:38px;height:38px;border-radius:8px;
-          background:var(--yellow);
-          display:flex;align-items:center;justify-content:center;
-          font-weight:800;color:var(--navy);font-size:17px;
-        }
-        .brand-text h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.2px;}
-        .brand-text p{margin:0;font-size:12.5px;color:#b9c6dc;}
-        .topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-        .btn{
-          border:1px solid rgba(255,255,255,.25);
-          background:rgba(255,255,255,.08);
-          color:#fff;
-          padding:9px 16px;
-          border-radius:8px;
-          font-size:13.5px;
-          font-weight:500;
-          cursor:pointer;
-          display:flex;align-items:center;gap:8px;
-          transition:background .15s ease;
-        }
-        .btn:hover{background:rgba(255,255,255,.18);}
-        .btn-primary{
-          background:var(--yellow);
-          color:var(--navy);
-          border-color:var(--yellow);
-          font-weight:700;
-        }
-        .btn-primary:hover{background:var(--yellow-dark);}
-        .btn-light{
-          background:#fff;color:var(--navy);border-color:#fff;font-weight:600;
-        }
-        .btn-light:hover{background:#eef1f6;}
-        .container{max-width:1320px;margin:0 auto;padding:24px 32px 60px;}
-        .filters{
-          display:flex;gap:12px;flex-wrap:wrap;align-items:center;
-          background:var(--card);
-          border:1px solid var(--border);
-          border-radius:var(--radius);
-          padding:14px 18px;
-          margin-bottom:20px;
-        }
-        .filters label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px;}
-        .filters select, .filters input[type=text]{
-          font-family:var(--font);
-          font-size:13.5px;
-          padding:8px 10px;
-          border:1px solid var(--border-strong);
-          border-radius:7px;
-          background:#fff;
-          color:var(--text);
-          min-width:160px;
-        }
-        .filters .field{display:flex;flex-direction:column;}
-        .filters .spacer{flex:1;}
-        .filters .reset{
-          font-size:13px;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;
-          padding:8px 4px;
-        }
-        .kpi-grid{
-          display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-          gap:14px;
-          margin-bottom:24px;
-        }
-        .kpi{
-          background:var(--card);
-          border:1px solid var(--border);
-          border-radius:var(--radius);
-          padding:16px 18px;
-          position:relative;
-          overflow:hidden;
-        }
-        .kpi::before{
-          content:"";
-          position:absolute;top:0;left:0;width:4px;height:100%;
-          background:var(--blue);
-        }
-        .kpi.accent-yellow::before{background:var(--yellow);}
-        .kpi.accent-green::before{background:var(--green);}
-        .kpi.accent-red::before{background:var(--red);}
-        .kpi-label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;}
-        .kpi-value{font-size:24px;font-weight:700;color:var(--navy);letter-spacing:-.3px;}
-        .kpi-sub{font-size:12px;color:var(--text-secondary);margin-top:4px;}
-        .panel{
-          background:var(--card);
-          border:1px solid var(--border);
-          border-radius:var(--radius);
-          margin-bottom:22px;
-          overflow:hidden;
-        }
-        .panel-header{
-          display:flex;align-items:center;justify-content:space-between;
-          padding:16px 20px;
-          border-bottom:1px solid var(--border);
-          flex-wrap:wrap;gap:10px;
-        }
-        .panel-header h2{margin:0;font-size:15px;font-weight:600;color:var(--navy);}
-        .panel-header .hint{font-size:12px;color:var(--text-muted);}
-        .panel-body{padding:18px 20px;}
-        .charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
-        @media(max-width:900px){.charts-row{grid-template-columns:1fr;}}
-        table{width:100%;border-collapse:collapse;font-size:13px;}
-        thead th{
-          text-align:left;
-          font-size:11px;
-          text-transform:uppercase;
-          letter-spacing:.3px;
-          color:var(--text-muted);
-          font-weight:700;
-          padding:10px 12px;
-          border-bottom:2px solid var(--border);
-          white-space:nowrap;
-        }
-        tbody td{
-          padding:10px 12px;
-          border-bottom:1px solid var(--border);
-          color:var(--text);
-          white-space:nowrap;
-        }
-        tbody tr:hover{background:#f8fafc;}
-        .num{text-align:right;font-variant-numeric:tabular-nums;}
-        .badge{
-          font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;
-        }
-        .badge-activo{background:var(--green-bg);color:var(--green);}
-        .badge-negociacion{background:var(--amber-bg);color:var(--amber);}
-        .badge-cerrado{background:#eef0f3;color:var(--text-secondary);}
-        .bar-track{width:100px;height:6px;background:#eef1f5;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
-        .bar-fill{height:100%;background:var(--blue);}
-        .bar-fill.over{background:var(--green);}
-        .row-edit-btn{
-          border:1px solid var(--border-strong);background:#fff;color:var(--blue);
-          font-size:11.5px;padding:4px 9px;border-radius:6px;cursor:pointer;font-weight:600;
-        }
-        .row-edit-btn:hover{background:#f0f5fb;}
-        .dropzone{
-          border:2px dashed var(--border-strong);
-          border-radius:14px;
-          padding:50px 20px;
-          text-align:center;
-          background:#fbfcfe;
-          transition:border-color .15s, background .15s;
-          cursor:pointer;
-        }
-        .dropzone.dragover{border-color:var(--blue);background:#eef5fc;}
-        .dropzone h3{color:var(--navy);margin:14px 0 6px;font-size:16px;}
-        .dropzone p{color:var(--text-muted);font-size:13px;margin:0 0 18px;}
-        .modal-overlay{
-          position:fixed;inset:0;background:rgba(12,37,71,.45);
-          display:flex;align-items:center;justify-content:center;z-index:100;
-          padding:20px;
-        }
-        .modal{
-          background:#fff;border-radius:12px;max-width:480px;width:100%;
-          padding:24px;max-height:85vh;overflow-y:auto;
-        }
-        .modal h3{margin:0 0 16px;color:var(--navy);font-size:16px;}
-        .modal .field{margin-bottom:12px;}
-        .modal label{font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:5px;}
-        .modal input, .modal select{
-          width:100%;padding:9px 10px;border:1px solid var(--border-strong);border-radius:7px;
-          font-family:var(--font);font-size:13.5px;
-        }
-        .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
-        .btn-secondary{
-          border:1px solid var(--border-strong);background:#fff;color:var(--text);
-          padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
-        }
-        .btn-secondary:hover{background:#f4f6f9;}
-        .btn-save{
-          border:1px solid var(--blue);background:var(--blue);color:#fff;
-          padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
-        }
-        .btn-save:hover{background:var(--navy);}
-        .toast{
-          position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-          background:var(--navy);color:#fff;padding:11px 20px;border-radius:8px;
-          font-size:13.5px;font-weight:500;z-index:200;
-          box-shadow:0 6px 20px rgba(0,0,0,.2);
-          display:none;
-        }
-        .legend-row{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin-bottom:10px;}
-        .legend-row span{display:flex;align-items:center;gap:6px;}
-        .legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
-        /* Estilos específicos del login */
-        #loginContainer {
-            max-width: 400px;
-            margin: 80px auto;
-            padding: 30px;
-            background: var(--card);
-            border-radius: var(--radius);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        #loginContainer h2 {
-            color: var(--navy);
-            margin-top: 0;
-        }
-        #loginContainer p {
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento CECOs · Konecta</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --navy:#0c2547;--navy-2:#13325c;--blue:#185fa5;
+  --yellow:#f2b705;--yellow-dark:#c98e00;
+  --bg:#f0f3f8;--card:#fff;--border:#e3e7ee;--border-strong:#cdd4df;
+  --text:#16233a;--text-secondary:#5a6678;--text-muted:#8993a3;
+  --green:#1d9e75;--green-bg:#e1f5ee;--red:#d04848;--red-bg:#fbeaea;
+  --amber:#c98500;--amber-bg:#fdf2dd;
+  --radius:10px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+
+.topbar{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.18);}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:15px;}
+.brand-text h1{font-size:15px;font-weight:600;}
+.brand-text p{font-size:11px;color:#b9c6dc;margin-top:2px;}
+.topbar-meta{font-size:11px;color:#8fb3d4;display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+#fileInput{display:none;}
+.btn{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.btn:hover{background:rgba(255,255,255,.18);}
+.btn-primary{background:var(--yellow);color:var(--navy);border-color:var(--yellow);font-weight:700;}
+.btn-primary:hover{background:var(--yellow-dark);}
+
+.container{max-width:1380px;margin:0 auto;padding:20px 26px 60px;}
+
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:11px 15px;margin-bottom:16px;}
+.filters label{font-size:10.5px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+.filters select{font-family:var(--font);font-size:13px;padding:6px 9px;border:1px solid var(--border-strong);border-radius:7px;background:#fff;color:var(--text);min-width:140px;}
+.filters .field{display:flex;flex-direction:column;}
+.filters .spacer{flex:1;}
+.btn-reset{font-size:12px;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;padding:5px 3px;}
+.btn-export{font-size:12px;color:var(--text-secondary);background:#f4f6f9;border:1px solid var(--border-strong);cursor:pointer;font-weight:600;padding:6px 11px;border-radius:7px;}
+.btn-export:hover{background:#eaecf1;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:12px;margin-bottom:18px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden;}
+.kpi::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--blue);}
+.kpi.accent-yellow::before{background:var(--yellow);}
+.kpi.accent-green::before{background:var(--green);}
+.kpi.accent-red::before{background:var(--red);}
+.kpi-label{font-size:10.5px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;}
+.kpi-value{font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-.3px;}
+.kpi-delta{font-size:11.5px;margin-top:4px;}
+.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.delta-up{color:var(--green);}
+.delta-down{color:var(--red);}
+.delta-flat{color:var(--text-muted);}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;}
+.ph h2{font-size:14px;font-weight:600;color:var(--navy);}
+.ph .hint{font-size:11px;color:var(--text-muted);}
+.ph-toggle{cursor:pointer;user-select:none;}
+.ph-toggle .ci{font-size:11px;color:var(--text-muted);transition:transform .2s;}
+.ph-toggle.collapsed .ci{transform:rotate(-90deg);}
+.pb{padding:15px 17px;}
+.pb.hidden{display:none;}
+
+.charts-2{display:grid;grid-template-columns:1.35fr 1fr;gap:15px;margin-bottom:16px;}
+.charts-2-equal{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:16px;}
+@media(max-width:900px){.charts-2,.charts-2-equal{grid-template-columns:1fr;}}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--text-muted);font-weight:700;padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;}
+thead th.sortable{cursor:pointer;}
+thead th.sortable:hover{color:var(--navy);}
+thead th.sort-asc::after{content:" ↑";color:var(--blue);}
+thead th.sort-desc::after{content:" ↓";color:var(--blue);}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+tbody tr:hover{background:#f7f9fc;}
+tfoot td{padding:9px 10px;font-weight:700;font-size:13px;color:var(--navy);border-top:2px solid var(--border);background:#f7f9fc;}
+.num{text-align:right;font-variant-numeric:tabular-nums;}
+.badge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;}
+.badge-activo{background:var(--green-bg);color:var(--green);}
+.badge-negociacion{background:var(--amber-bg);color:var(--amber);}
+.badge-cerrado{background:#eef0f3;color:var(--text-secondary);}
+.bar-track{width:70px;height:5px;background:#eef1f5;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:5px;}
+.bar-fill{height:100%;background:var(--blue);}
+.bar-fill.over{background:var(--green);}
+.row-edit-btn{border:1px solid var(--border-strong);background:#fff;color:var(--blue);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600;}
+.row-edit-btn:hover{background:#f0f5fb;}
+
+.kpi-alert{background:var(--red-bg);border:1px solid #f0c9c9;border-radius:8px;padding:9px 13px;font-size:12px;color:var(--red);margin-bottom:14px;}
+
+.prog-row{margin-bottom:12px;}
+.prog-meta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.prog-code{font-size:12.5px;font-weight:600;color:var(--navy);}
+.prog-client{font-size:11px;color:var(--text-muted);margin-left:7px;}
+.prog-pct{font-weight:700;font-size:12.5px;}
+.prog-amounts{color:var(--text-muted);font-size:11.5px;margin-left:7px;}
+.prog-track{height:7px;background:#eef1f5;border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--text-secondary);margin-bottom:9px;}
+.legend-row span{display:flex;align-items:center;gap:5px;}
+.ldot{width:8px;height:8px;border-radius:2px;display:inline-block;}
+
+.dropzone{border:2px dashed var(--border-strong);border-radius:14px;padding:60px 20px;text-align:center;background:#fbfcfe;transition:border-color .15s,background .15s;cursor:pointer;}
+.dropzone.dragover{border-color:var(--blue);background:#eef5fc;}
+.dropzone h3{color:var(--navy);margin:14px 0 6px;font-size:17px;}
+.dropzone p{color:var(--text-muted);font-size:13px;margin:0 0 20px;max-width:440px;margin-left:auto;margin-right:auto;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(12,37,71,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+.modal{background:#fff;border-radius:12px;max-width:500px;width:100%;padding:22px;max-height:88vh;overflow-y:auto;}
+.modal h3{color:var(--navy);font-size:16px;margin-bottom:15px;}
+.modal .field{margin-bottom:11px;}
+.modal label{font-size:11.5px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;}
+.modal input,.modal select{width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:7px;font-family:var(--font);font-size:13px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
+.btn-secondary{border:1px solid var(--border-strong);background:#fff;color:var(--text);padding:8px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-secondary:hover{background:#f4f6f9;}
+.btn-save{border:1px solid var(--blue);background:var(--blue);color:#fff;padding:8px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-save:hover{background:var(--navy);}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.2);display:none;}
+
+/* ── IMPUTACIÓN DE HORAS ── */
+.horas-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;}
+.horas-tab{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border-strong);background:#f4f6f9;color:var(--text-secondary);transition:all .15s;}
+.horas-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.horas-tab.has-data{border-color:var(--blue);color:var(--blue);background:#eef5fb;}
+.horas-tab.active.has-data{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+.horas-grid{overflow-x:auto;}
+.horas-grid table{min-width:600px;}
+.horas-grid thead th{background:#f7f9fc;}
+.horas-grid thead th.perfil-header{background:var(--navy);color:#fff;font-size:11px;text-align:center;}
+.horas-grid tbody td.ceco-cell{font-weight:600;color:var(--navy);font-size:12px;min-width:130px;}
+.horas-input{width:60px;padding:5px 6px;border:1px solid var(--border-strong);border-radius:6px;text-align:center;font-size:12.5px;font-family:var(--font);background:#fff;}
+.horas-input:focus{outline:none;border-color:var(--blue);background:#f0f7ff;}
+.horas-input.over-cap{border-color:var(--red);background:#fff8f8;}
+
+.cap-row{display:flex;gap:16px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border);margin-top:12px;}
+.cap-item{font-size:12px;display:flex;align-items:center;gap:8px;}
+.cap-bar-track{width:100px;height:6px;background:#eef1f5;border-radius:3px;overflow:hidden;display:inline-block;}
+.cap-bar-fill{height:100%;border-radius:3px;transition:width .3s;}
+.cap-label{color:var(--text-muted);}
+.cap-value{font-weight:700;}
+
+.horas-total-row td{background:#f0f3f8;font-weight:700;font-size:12px;color:var(--navy);}
+.coste-cell{font-size:11.5px;color:var(--text-secondary);font-style:italic;}
+</style>
 </head>
 <body>
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div class="brand">
-            <div class="brand-mark">K</div>
-            <div class="brand-text">
-                <h1>Seguimiento económico de CECOs</h1>
-                <p id="periodLabel">Ejercicio 2026 · Datos seguros con OAuth 2.0</p>
-            </div>
-        </div>
-        <div class="topbar-actions">
-            <button class="btn btn-light" id="refreshBtn" onclick="window.refreshData()">🔄 Actualizar datos</button>
-            <span id="lastUpdate" style="font-size:12px;color:rgba(255,255,255,0.7);margin-right:8px;"></span>
-        </div>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">K</div>
+    <div class="brand-text">
+      <h1>Seguimiento económico de CECOs</h1>
+      <p id="periodLabel">Ejercicio 2026</p>
+    </div>
+  </div>
+  <div class="topbar-meta" id="topbarMeta"></div>
+  <div class="topbar-actions">
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+    <button class="btn" id="importBtn">↑ Importar Excel</button>
+    <button class="btn btn-primary" id="addCecoBtn">+ Nuevo CECO</button>
+  </div>
+</div>
+
+<div class="container">
+  <div id="emptyState" class="dropzone" style="display:none;">
+    <div style="font-size:34px;">📊</div>
+    <h3>Arrastra tu Excel aquí</h3>
+    <p>Importa Seguimiento_CECOs.xlsx para cargar Maestro, Ingresos y RateCard. Los datos quedan guardados localmente.</p>
+    <button class="btn btn-primary" id="dropzoneBtn">Seleccionar archivo</button>
+  </div>
+
+  <div id="mainContent" style="display:none;">
+
+    <!-- FILTROS -->
+    <div class="filters">
+      <div class="field"><label>Cliente</label><select id="filterCliente"><option value="">Todos</option></select></div>
+      <div class="field"><label>Unidad de negocio</label><select id="filterUnidad"><option value="">Todas</option></select></div>
+      <div class="field"><label>Estado</label><select id="filterEstado"><option value="">Todos</option></select></div>
+      <div class="spacer"></div>
+      <button class="btn-reset" id="resetFilters">Limpiar</button>
+      <button class="btn-export" id="exportCsvBtn">⬇ CSV</button>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div class="container" id="container">
-        <!-- Login State -->
-        <div id="loginContainer" style="display:block;">
-            <h2>🔐 Acceso al Dashboard</h2>
-            <p>Para visualizar los datos, necesitas iniciar sesión con tu cuenta de Google de Konecta.</p>
-            <button class="btn btn-primary" id="loginBtn">Iniciar sesión con Google</button>
-            <div id="loginStatus" style="margin-top:16px;font-size:13px;color:var(--text-muted);"></div>
+    <div id="kpiAlert" style="display:none;" class="kpi-alert"></div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- GRÁFICOS FILA 1 -->
+    <div class="charts-2">
+      <div class="panel">
+        <div class="ph"><h2>Evolución mensual · Ingresos vs Costes</h2><span class="hint" id="periodHint"></span></div>
+        <div class="pb">
+          <div class="legend-row">
+            <span><span class="ldot" style="background:#185fa5"></span>Ingresos reales</span>
+            <span><span class="ldot" style="background:rgba(227,73,72,.65)"></span>Costes imputados</span>
+            <span><span class="ldot" style="background:#f2b705;border-radius:0;height:3px;width:14px"></span>Previsto</span>
+          </div>
+          <div style="position:relative;height:240px;"><canvas id="chartEvolucion"></canvas></div>
         </div>
-
-        <!-- Loading State -->
-        <div id="loadingState" class="dropzone" style="display:none;">
-            <div style="font-size:32px;">⏳</div>
-            <h3>Cargando datos desde Google Sheets...</h3>
-            <p>Por favor espera mientras se sincronizan los datos del dashboard</p>
-            <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
-                <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div id="mainContent" style="display:none;">
-            <div class="filters">
-                <div class="field">
-                    <label>Cliente</label>
-                    <select id="filterCliente"><option value="">Todos</option></select>
-                </div>
-                <div class="field">
-                    <label>Unidad de negocio</label>
-                    <select id="filterUnidad"><option value="">Todas</option></select>
-                </div>
-                <div class="field">
-                    <label>Estado</label>
-                    <select id="filterEstado"><option value="">Todos</option></select>
-                </div>
-                <div class="spacer"></div>
-                <button class="reset" id="resetFilters">Limpiar filtros</button>
-            </div>
-
-            <div class="kpi-grid" id="kpiGrid"></div>
-
-            <div class="charts-row">
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2>Real vs previsto · evolución mensual</h2>
-                        <span class="hint">Suma de todos los CECOs filtrados</span>
-                    </div>
-                    <div class="panel-body">
-                        <div class="legend-row">
-                            <span><span class="legend-dot" style="background:#185fa5"></span>Real</span>
-                            <span><span class="legend-dot" style="background:#f2b705"></span>Previsto</span>
-                        </div>
-                        <div style="position:relative;height:260px;">
-                            <canvas id="chartEvolucion" role="img" aria-label="Evolución mensual de ingresos reales frente a previstos"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2>Reparto de ingresos por CECO</h2>
-                    </div>
-                    <div class="panel-body">
-                        <div style="position:relative;height:260px;">
-                            <canvas id="chartReparto" role="img" aria-label="Reparto de ingresos por CECO"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">
-                    <h2>Detalle por CECO</h2>
-                    <span class="hint" id="tableCount"></span>
-                </div>
-                <div class="panel-body" style="overflow-x:auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Proyecto</th>
-                                <th>Cliente</th>
-                                <th>Unidad</th>
-                                <th>Estado</th>
-                                <th class="num">Presupuesto</th>
-                                <th class="num">Real facturado</th>
-                                <th>Avance</th>
-                                <th class="num">Margen</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="cecoTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h2>P&amp;L simplificado · YTD</h2><span class="hint">Ingresos → Costes → Margen</span></div>
+        <div class="pb"><div style="position:relative;height:240px;"><canvas id="chartWaterfall"></canvas></div></div>
+      </div>
     </div>
 
-    <div id="modalRoot"></div>
-    <div class="toast" id="toast"></div>
+    <!-- GRÁFICOS FILA 2 -->
+    <div class="charts-2-equal">
+      <div class="panel">
+        <div class="ph"><h2>Margen bruto por CECO</h2><span class="hint">Ordenado mayor → menor</span></div>
+        <div class="pb"><div style="position:relative;height:250px;"><canvas id="chartMargenCeco"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h2>Concentración de ingresos</h2><span class="hint">% sobre total facturado</span></div>
+        <div class="pb"><div style="position:relative;height:250px;"><canvas id="chartReparto"></canvas></div></div>
+      </div>
+    </div>
 
-    <script>
-        // ============================================================
-        // 1. CONFIGURACIÓN DE OAuth 2.0
-        // ============================================================
-        const CONFIG = {
-            // Tu Client ID OAuth 2.0
-            CLIENT_ID: '758143935798-am5559p4kt5k7vb8b6bidt4ufodiu0ue.apps.googleusercontent.com',
-            // ID del archivo de Google Sheets (nuevo)
-            SPREADSHEET_ID: '1X_hXlM4lWFZVJG8945NL6YBo87vLAicvBN5xqzL2h_E',
-            // Alcances (permisos) necesarios: solo lectura de Sheets
-            SCOPES: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-            // Nombres de las hojas
-            SHEETS: {
-                maestro: 'Maestro_CECOs',
-                ingresos: 'Ingresos'
-            }
-        };
+    <!-- AVANCE PRESUPUESTO -->
+    <div class="panel">
+      <div class="ph"><h2>Avance sobre presupuesto</h2><span class="hint">Solo CECOs con presupuesto definido</span></div>
+      <div class="pb" id="chartCobertura"></div>
+    </div>
 
-        // ============================================================
-        // 2. ESTADO DE LA APLICACIÓN
-        // ============================================================
-        let state = { maestro: [], ingresos: [] };
-        let charts = {};
-        let isLoading = false;
-        let authToken = null;
+    <!-- IMPUTACIÓN DE HORAS (colapsable) -->
+    <div class="panel">
+      <div class="ph ph-toggle" id="horasToggle">
+        <h2>⏱ Imputación de horas por proyecto</h2>
+        <span style="display:flex;gap:12px;align-items:center;">
+          <span class="hint" id="horasResumen"></span>
+          <span class="ci">▼</span>
+        </span>
+      </div>
+      <div class="pb hidden" id="horasPanelBody"></div>
+    </div>
 
-        // ============================================================
-        // 3. FUNCIONES DE AUTENTICACIÓN OAuth
-        // ============================================================
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.display = 'block';
-            clearTimeout(t._timer);
-            t._timer = setTimeout(() => { t.style.display = 'none'; }, 3500);
+    <!-- TABLA DETALLE -->
+    <div class="panel">
+      <div class="ph"><h2>Detalle por CECO</h2><span class="hint" id="tableCount"></span></div>
+      <div class="pb" style="overflow-x:auto;padding:0;">
+        <table id="cecoTable">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="codigo">Código</th>
+              <th class="sortable" data-col="proyecto">Proyecto</th>
+              <th class="sortable" data-col="cliente">Cliente</th>
+              <th class="sortable" data-col="unidad">Unidad</th>
+              <th data-col="estado">Estado</th>
+              <th class="sortable num" data-col="presupuesto">Presupuesto</th>
+              <th class="sortable num" data-col="ingresos">Ingresos</th>
+              <th class="num" style="font-size:10.5px">Horas imp.</th>
+              <th class="sortable num" data-col="coste">Coste YTD</th>
+              <th class="sortable num" data-col="margen">Margen Bruto</th>
+              <th>Avance</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cecoTableBody"></tbody>
+          <tfoot id="cecoTableFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'cecos_data_v3';
+// horas: { mes: { codigo: { analyst:N, associate:N, senior:N, principal:N } } }
+let state = {
+  maestro:[], ingresos:[],
+  ratecard:{ analystCostHour:0, associateCostHour:0, seniorCostHour:0, principalCostHour:0, netHoursYear:1762.8 },
+  plantilla:{ analysts:5, associates:0, seniors:2, principals:0 },
+  horas:{},
+  importedAt:null
+};
+let charts = {evolucion:null,waterfall:null,margenCeco:null,reparto:null};
+let sortState = {col:'margen',dir:'desc'};
+
+const MONTHS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+// Perfiles disponibles en la RateCard
+const PERFILES=[
+  {key:'analyst',  label:'Analyst',   costKey:'analystCostHour',   ftesKey:'analysts'},
+  {key:'associate',label:'Associate', costKey:'associateCostHour', ftesKey:'associates'},
+  {key:'senior',   label:'Senior',    costKey:'seniorCostHour',    ftesKey:'seniors'},
+  {key:'principal',label:'Principal', costKey:'principalCostHour', ftesKey:'principals'},
+];
+
+// ── STORAGE ──────────────────────────────────────────────────
+const store={
+  async get(k){try{if(typeof window.storage!=='undefined'&&window.storage.get){const r=await window.storage.get(k);return r?r.value:null;}return localStorage.getItem(k);}catch(e){return null;}},
+  async set(k,v){try{if(typeof window.storage!=='undefined'&&window.storage.set)await window.storage.set(k,v);else localStorage.setItem(k,v);}catch(e){console.warn(e);}}
+};
+async function loadState(){try{const v=await store.get(STORAGE_KEY);if(v){state=Object.assign(state,JSON.parse(v));return true;}}catch(e){}return false;}
+async function saveState(){try{await store.set(STORAGE_KEY,JSON.stringify(state));}catch(e){showToast('Error guardando');}}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function fmtEUR(n){return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);}
+function fmtPct(n){return new Intl.NumberFormat('es-ES',{style:'percent',maximumFractionDigits:1}).format(n||0);}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function showToast(msg,dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',dur);}
+function excelDateToISO(s){if(!s||isNaN(s))return'';return new Date(Math.round((s-25569)*86400*1000)).toISOString().slice(0,10);}
+function monthsElapsedYTD(){return new Date().getMonth()+1;}
+function statusBadgeClass(e){const s=(e||'').toLowerCase();if(s.includes('negocia'))return'badge-negociacion';if(s.includes('cerrado'))return'badge-cerrado';return'badge-activo';}
+
+// ── CÁLCULOS DE HORAS Y COSTE ─────────────────────────────────
+function tarifaHora(perfilKey){
+  const p=PERFILES.find(x=>x.key===perfilKey);
+  return p?Number(state.ratecard[p.costKey]||0):0;
+}
+
+// Horas totales YTD imputadas a un CECO (todos los meses, todos los perfiles)
+function horasTotalesCeco(codigo){
+  let total=0;
+  const mesesYTD=monthsElapsedYTD();
+  MONTHS.slice(0,mesesYTD).forEach(mes=>{
+    const mData=state.horas[mes]||{};
+    const cData=mData[codigo]||{};
+    PERFILES.forEach(p=>{total+=Number(cData[p.key]||0);});
+  });
+  return total;
+}
+
+// Coste YTD de un CECO basado en horas × tarifa
+function costeCeco(codigo){
+  let coste=0;
+  const mesesYTD=monthsElapsedYTD();
+  MONTHS.slice(0,mesesYTD).forEach(mes=>{
+    const mData=state.horas[mes]||{};
+    const cData=mData[codigo]||{};
+    PERFILES.forEach(p=>{
+      const h=Number(cData[p.key]||0);
+      coste+=h*tarifaHora(p.key);
+    });
+  });
+  return coste;
+}
+
+// Horas imputadas en un mes por perfil (suma de todos los CECOs)
+function horasMesPerfil(mes,perfilKey){
+  const mData=state.horas[mes]||{};
+  return Object.values(mData).reduce((s,c)=>s+Number(c[perfilKey]||0),0);
+}
+
+// Capacidad máxima mensual por perfil = FTEs × horas netas / 12
+function capacidadMesPerfil(perfilKey){
+  const p=PERFILES.find(x=>x.key===perfilKey);
+  if(!p)return 0;
+  const ftes=Number(state.plantilla[p.ftesKey]||0);
+  const hNet=Number(state.ratecard.netHoursYear||1762.8);
+  return ftes*(hNet/12);
+}
+
+function totalIngresos(codigo){return state.ingresos.filter(i=>i.codigo===codigo).reduce((s,i)=>s+i.importe,0);}
+
+// Alerta de sobreasignación por mes
+function calcAlertas(){
+  const alertas=[];
+  const mesesYTD=monthsElapsedYTD();
+  MONTHS.slice(0,mesesYTD).forEach(mes=>{
+    PERFILES.forEach(p=>{
+      const cap=capacidadMesPerfil(p.key);
+      if(cap<=0)return;
+      const usado=horasMesPerfil(mes,p.key);
+      if(usado>cap)alertas.push(`${mes}: ${p.label} ${Math.round(usado)}h / ${Math.round(cap)}h cap.`);
+    });
+  });
+  return alertas;
+}
+
+// ── FILTROS ───────────────────────────────────────────────────
+function getFiltered(){
+  const c=document.getElementById('filterCliente').value;
+  const u=document.getElementById('filterUnidad').value;
+  const e=document.getElementById('filterEstado').value;
+  return state.maestro.filter(m=>{
+    if(c&&m.cliente!==c)return false;
+    if(u&&m.unidad!==u)return false;
+    if(e&&m.estado!==e)return false;
+    return true;
+  });
+}
+function populateFilters(){
+  fillSel('filterCliente',[...new Set(state.maestro.map(m=>m.cliente).filter(Boolean))].sort());
+  fillSel('filterUnidad',[...new Set(state.maestro.map(m=>m.unidad).filter(Boolean))].sort());
+  fillSel('filterEstado',[...new Set(state.maestro.map(m=>m.estado).filter(Boolean))].sort());
+}
+function fillSel(id,vals){const s=document.getElementById(id);const cur=s.value;const lbl=s.options[0].textContent;s.innerHTML=`<option value="">${lbl}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(vals.includes(cur))s.value=cur;}
+
+// ── PARSE EXCEL ───────────────────────────────────────────────
+function parseExcel(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});
+        const ms=wb.Sheets['Maestro_CECOs'];
+        if(!ms){reject('No se encontró hoja Maestro_CECOs');return;}
+        const maestro=XLSX.utils.sheet_to_json(ms,{range:3,defval:''})
+          .filter(r=>r['Código CECO']&&String(r['Código CECO']).trim())
+          .map(r=>({
+            codigo:String(r['Código CECO']).trim(),proyecto:r['Nombre Proyecto']||'',
+            cliente:r['Cliente']||'',unidad:r['Unidad de Negocio']||'',
+            responsable:r['Responsable']||'',fechaInicio:excelDateToISO(r['Fecha Inicio']),
+            fechaFin:excelDateToISO(r['Fecha Fin Prevista']),estado:r['Estado']||'Activo',
+            presupuestoIngresos:Number(r['Presupuesto Ingresos Total (€)'])||0,
+            presupuestoCostes:Number(r['Presupuesto Costes Total (€)'])||0,notas:r['Notas']||''
+          }));
+        let ingresos=[];
+        const is=wb.Sheets['Ingresos'];
+        if(is){
+          ingresos=XLSX.utils.sheet_to_json(is,{range:3,defval:''})
+            .filter(r=>r['Código CECO']&&String(r['Código CECO']).trim()&&r['Importe (€)']!=='')
+            .map(r=>({codigo:String(r['Código CECO']).trim(),mes:r['Mes']||'',anio:r['Año']||2026,importe:Number(r['Importe (€)'])||0}));
         }
-
-        function updateLoginStatus(message, isError = false) {
-            const status = document.getElementById('loginStatus');
-            status.textContent = message;
-            status.style.color = isError ? '#d04848' : 'var(--text-muted)';
+        // RateCard: col 0=label, 2=Analyst, 3=Associate, 4=Senior, 5=Principal
+        let ratecard={analystCostHour:0,associateCostHour:0,seniorCostHour:0,principalCostHour:0,netHoursYear:1762.8};
+        let plantilla={analysts:5,associates:0,seniors:2,principals:0};
+        const rc=wb.Sheets['RateCard'];
+        if(rc){
+          const aoa=XLSX.utils.sheet_to_json(rc,{header:1,defval:''});
+          const fR=l=>aoa.find(r=>String(r[0]||'').trim()===l);
+          const nh=fR('Net # Worked Hours per Year');
+          const ch=fR('Total Direct Cost per Worked Hour (Euro):');
+          if(nh)ratecard.netHoursYear=Number(nh[2])||1762.8;
+          if(ch){
+            ratecard.analystCostHour=Number(ch[2])||0;
+            ratecard.associateCostHour=Number(ch[3])||0;
+            ratecard.seniorCostHour=Number(ch[4])||0;
+            ratecard.principalCostHour=Number(ch[5])||0;
+          }
+          // FTEs: buscar fila de headcount si existe, si no mantener defaults
+          const hcR=fR('Headcount');
+          if(hcR){
+            plantilla.analysts=Number(hcR[2])||5;
+            plantilla.associates=Number(hcR[3])||0;
+            plantilla.seniors=Number(hcR[4])||2;
+            plantilla.principals=Number(hcR[5])||0;
+          }
         }
-
-        // Función para autenticar al usuario
-        function authenticateUser() {
-            return new Promise((resolve, reject) => {
-                updateLoginStatus('Iniciando sesión...');
-
-                // Verificar si gapi está disponible
-                if (typeof gapi === 'undefined' || !gapi.auth2) {
-                    reject(new Error('La biblioteca de Google no se ha cargado correctamente. Verifica tu conexión a internet.'));
-                    return;
-                }
-
-                gapi.auth2.authorize({
-                    client_id: CONFIG.CLIENT_ID,
-                    scope: CONFIG.SCOPES,
-                    immediate: false, // Muestra la ventana de login
-                    include_granted_scopes: true,
-                    prompt: 'select_account' // Permite elegir cuenta
-                }, (authResult) => {
-                    if (authResult && !authResult.error) {
-                        authToken = authResult.access_token;
-                        updateLoginStatus('✅ Sesión iniciada correctamente.');
-                        resolve(authResult);
-                    } else {
-                        let errorMsg = 'Error al iniciar sesión.';
-                        if (authResult && authResult.error) {
-                            errorMsg += ` ${authResult.error}`;
-                            if (authResult.error === 'popup_closed_by_user') {
-                                errorMsg = 'Inicio de sesión cancelado.';
-                            } else if (authResult.error === 'access_denied') {
-                                errorMsg = 'Acceso denegado. Asegúrate de usar tu cuenta de Konecta.';
-                            }
-                        }
-                        updateLoginStatus(errorMsg, true);
-                        reject(new Error(errorMsg));
-                    }
-                });
-            });
-        }
-
-        // Función para cargar la biblioteca de Google y autenticar
-        function initOAuth() {
-            return new Promise((resolve, reject) => {
-                // Verificar si gapi ya está cargado
-                if (typeof gapi !== 'undefined' && gapi.auth2) {
-                    resolve();
-                    return;
-                }
-
-                // Cargar la biblioteca de autenticación
-                const script = document.createElement('script');
-                script.src = 'https://apis.google.com/js/api.js';
-                script.onload = () => {
-                    gapi.load('auth2', () => {
-                        resolve();
-                    });
-                };
-                script.onerror = () => {
-                    reject(new Error('No se pudo cargar la biblioteca de autenticación de Google.'));
-                };
-                document.head.appendChild(script);
-            });
-        }
-
-        // ============================================================
-        // 4. FUNCIÓN PARA LEER DATOS CON OAuth
-        // ============================================================
-        async function fetchSheetDataWithOAuth(sheetName) {
-            if (!authToken) {
-                throw new Error('No estás autenticado. Inicia sesión primero.');
-            }
-
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;
-
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    let errorMsg = `Error ${response.status}`;
-                    const errorData = await response.json();
-                    if (errorData && errorData.error) {
-                        errorMsg += `: ${errorData.error.message || errorData.error.status}`;
-                    }
-                    if (response.status === 401 || response.status === 403) {
-                        errorMsg = 'Tu sesión ha expirado o no tienes permisos. Vuelve a iniciar sesión.';
-                        // Forzar re-autenticación
-                        authToken = null;
-                    }
-                    throw new Error(errorMsg);
-                }
-
-                const data = await response.json();
-
-                if (!data.values || data.values.length === 0) {
-                    throw new Error(`La hoja "${sheetName}" está vacía o no tiene datos.`);
-                }
-
-                return data.values;
-
-            } catch (error) {
-                console.error(`Error cargando hoja ${sheetName}:`, error);
-                throw error;
-            }
-        }
-
-        // ============================================================
-        // 5. FUNCIONES DE TRANSFORMACIÓN (igual que antes)
-        // ============================================================
-        function transformMaestroData(rawData) {
-            if (!rawData || rawData.length < 2) return [];
-
-            const headers = rawData[0].map(h => String(h).trim());
-
-            const idx = {
-                codigo: headers.indexOf('Código CECO'),
-                proyecto: headers.indexOf('Nombre Proyecto'),
-                cliente: headers.indexOf('Cliente'),
-                unidad: headers.indexOf('Unidad de Negocio'),
-                responsable: headers.indexOf('Responsable'),
-                fechaInicio: headers.indexOf('Fecha Inicio'),
-                fechaFin: headers.indexOf('Fecha Fin Prevista'),
-                estado: headers.indexOf('Estado'),
-                presupuestoIngresos: headers.indexOf('Presupuesto Ingresos Total (€)'),
-                presupuestoCostes: headers.indexOf('Presupuesto Costes Total (€)'),
-                notas: headers.indexOf('Notas')
-            };
-
-            const data = [];
-            for (let i = 1; i < rawData.length; i++) {
-                const row = rawData[i];
-                if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
-
-                const codigo = String(row[idx.codigo] || '').trim();
-                if (!codigo) continue;
-
-                data.push({
-                    codigo: codigo,
-                    proyecto: String(row[idx.proyecto] || '').trim(),
-                    cliente: String(row[idx.cliente] || '').trim(),
-                    unidad: String(row[idx.unidad] || '').trim(),
-                    responsable: String(row[idx.responsable] || '').trim(),
-                    fechaInicio: row[idx.fechaInicio] ? String(row[idx.fechaInicio]).split(' ')[0] : '',
-                    fechaFin: row[idx.fechaFin] ? String(row[idx.fechaFin]).split(' ')[0] : '',
-                    estado: String(row[idx.estado] || 'Activo').trim(),
-                    presupuestoIngresos: Number(row[idx.presupuestoIngresos]) || 0,
-                    presupuestoCostes: Number(row[idx.presupuestoCostes]) || 0,
-                    notas: String(row[idx.notas] || '').trim()
-                });
-            }
-
-            return data;
-        }
-
-        function transformIngresosData(rawData) {
-            if (!rawData || rawData.length < 2) return [];
-
-            const headers = rawData[0].map(h => String(h).trim());
-
-            const idx = {
-                codigo: headers.indexOf('Código CECO'),
-                fecha: headers.indexOf('Fecha'),
-                mes: headers.indexOf('Mes'),
-                anio: headers.indexOf('Año'),
-                tipo: headers.indexOf('Tipo de Ingreso'),
-                concepto: headers.indexOf('Concepto / Descripción'),
-                importe: headers.indexOf('Importe (€)'),
-                factura: headers.indexOf('Nº Factura/Ref.'),
-                estadoCobro: headers.indexOf('Estado Cobro/Pago')
-            };
-
-            const data = [];
-            for (let i = 1; i < rawData.length; i++) {
-                const row = rawData[i];
-                if (!row || row.length === 0 || row.every(cell => cell === '' || cell === undefined)) continue;
-
-                const codigo = String(row[idx.codigo] || '').trim();
-                const importe = Number(row[idx.importe]) || 0;
-
-                if (!codigo || importe === 0) continue;
-
-                data.push({
-                    codigo: codigo,
-                    fecha: row[idx.fecha] ? String(row[idx.fecha]).split(' ')[0] : '',
-                    mes: String(row[idx.mes] || '').trim(),
-                    anio: Number(row[idx.anio]) || 2026,
-                    tipo: String(row[idx.tipo] || '').trim(),
-                    concepto: String(row[idx.concepto] || '').trim(),
-                    importe: importe,
-                    factura: String(row[idx.factura] || '').trim(),
-                    estadoCobro: String(row[idx.estadoCobro] || '').trim()
-                });
-            }
-
-            return data;
-        }
-
-        // ============================================================
-        // 6. FUNCIÓN PRINCIPAL DE CARGA
-        // ============================================================
-        async function loadAllData() {
-            if (isLoading) return;
-            if (!authToken) {
-                showToast('❌ Necesitas iniciar sesión primero.');
-                return;
-            }
-
-            isLoading = true;
-            const loadingBar = document.getElementById('loadingBar');
-            document.getElementById('loadingState').style.display = 'block';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('loginContainer').style.display = 'none';
-
-            try {
-                loadingBar.style.width = '10%';
-                console.log('Cargando Maestro_CECOs...');
-                const rawMaestro = await fetchSheetDataWithOAuth(CONFIG.SHEETS.maestro);
-                loadingBar.style.width = '40%';
-                state.maestro = transformMaestroData(rawMaestro);
-                console.log(`✅ Maestro cargado: ${state.maestro.length} CECOs`);
-
-                loadingBar.style.width = '70%';
-                console.log('Cargando Ingresos...');
-                const rawIngresos = await fetchSheetDataWithOAuth(CONFIG.SHEETS.ingresos);
-                state.ingresos = transformIngresosData(rawIngresos);
-                console.log(`✅ Ingresos cargados: ${state.ingresos.length} registros`);
-
-                loadingBar.style.width = '100%';
-
-                if (state.maestro.length === 0) {
-                    throw new Error('No se encontraron CECOs. Verifica que la hoja Maestro_CECOs tenga datos.');
-                }
-
-                // Mostrar dashboard
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-
-                populateFilterOptions();
-                render();
-
-                const now = new Date();
-                document.getElementById('lastUpdate').textContent =
-                    `Última actualización: ${now.toLocaleTimeString()}`;
-                showToast(`✅ Datos cargados: ${state.maestro.length} CECOs, ${state.ingresos.length} ingresos`);
-
-            } catch (error) {
-                console.error('Error:', error);
-                showToast(`❌ Error: ${error.message}`);
-                document.getElementById('loadingState').innerHTML = `
-                    <div style="font-size:32px;">⚠️</div>
-                    <h3>Error al cargar los datos</h3>
-                    <p>${error.message}</p>
-                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
-                        Asegúrate de que:<br>
-                        1. Tu sesión de Google esté activa<br>
-                        2. El archivo esté compartido con tu cuenta de Konecta<br>
-                        3. Tengas permisos de lectura en el archivo
-                    </p>
-                    <button class="btn btn-primary" onclick="window.refreshData()">Reintentar</button>
-                `;
-            } finally {
-                isLoading = false;
-            }
-        }
-
-        // ============================================================
-        // 7. FUNCIÓN REFRESH
-        // ============================================================
-        window.refreshData = function() {
-            console.log('🔄 Refrescando datos...');
-            if (!authToken) {
-                showToast('❌ Tu sesión ha expirado. Inicia sesión nuevamente.');
-                document.getElementById('loginContainer').style.display = 'block';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('loadingState').style.display = 'none';
-                return;
-            }
-            // Resetear el estado de carga
-            document.getElementById('loadingState').style.display = 'block';
-            document.getElementById('loadingState').innerHTML = `
-                <div style="font-size:32px;">🔄</div>
-                <h3>Recargando datos desde Google Sheets...</h3>
-                <p>Actualizando el dashboard</p>
-                <div style="width:200px;height:4px;background:#eef1f5;border-radius:4px;margin:16px auto;overflow:hidden;">
-                    <div id="loadingBar" style="width:0%;height:100%;background:var(--blue);border-radius:4px;transition:width 0.3s;"></div>
-                </div>
-            `;
-            document.getElementById('mainContent').style.display = 'none';
-            Object.keys(charts).forEach(key => {
-                if (charts[key]) { charts[key].destroy(); delete charts[key]; }
-            });
-            loadAllData();
-        };
-
-        // ============================================================
-        // 8. FUNCIONES DEL DASHBOARD (TODAS TUS FUNCIONES EXISTENTES)
-        // ============================================================
-        function getFilteredMaestro() {
-            const cliente = document.getElementById('filterCliente').value;
-            const unidad = document.getElementById('filterUnidad').value;
-            const estado = document.getElementById('filterEstado').value;
-            return state.maestro.filter(m => {
-                if (cliente && m.cliente !== cliente) return false;
-                if (unidad && m.unidad !== unidad) return false;
-                if (estado && m.estado !== estado) return false;
-                return true;
-            });
-        }
-
-        function ingresosFor(codigo) {
-            return state.ingresos.filter(i => i.codigo === codigo);
-        }
-
-        function totalIngresos(codigo) {
-            return ingresosFor(codigo).reduce((s, i) => s + i.importe, 0);
-        }
-
-        function populateFilterOptions() {
-            const clientes = [...new Set(state.maestro.map(m => m.cliente).filter(Boolean))].sort();
-            const unidades = [...new Set(state.maestro.map(m => m.unidad).filter(Boolean))].sort();
-            const estados = [...new Set(state.maestro.map(m => m.estado).filter(Boolean))].sort();
-            fillSelect('filterCliente', clientes);
-            fillSelect('filterUnidad', unidades);
-            fillSelect('filterEstado', estados);
-        }
-
-        function fillSelect(id, values) {
-            const sel = document.getElementById(id);
-            const allLabel = sel.options[0].textContent;
-            sel.innerHTML = `<option value="">${allLabel}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-        }
-
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [c]));
-        }
-
-        function fmtEUR(n) {
-            return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
-        }
-
-        function fmtPct(n) {
-            return new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 }).format(n || 0);
-        }
-
-        function statusBadgeClass(estado) {
-            const e = (estado || '').toLowerCase();
-            if (e.includes('negocia')) return 'badge-negociacion';
-            if (e.includes('cerrado')) return 'badge-cerrado';
-            return 'badge-activo';
-        }
-
-        function render() {
-            const filtered = getFilteredMaestro();
-            renderKpis(filtered);
-            renderTable(filtered);
-            renderEvolucionChart(filtered);
-            renderRepartoChart(filtered);
-        }
-
-        function renderKpis(filtered) {
-            const totalIngresosSum = filtered.reduce((s, m) => s + totalIngresos(m.codigo), 0);
-            const totalPresupuesto = filtered.reduce((s, m) => s + m.presupuestoIngresos, 0);
-            const activos = filtered.filter(m => (m.estado || '').toLowerCase().includes('activo')).length;
-            const pctAvance = totalPresupuesto > 0 ? totalIngresosSum / totalPresupuesto : null;
-
-            const kpis = [
-                { label: 'Ingresos facturados', value: fmtEUR(totalIngresosSum), accent: '', sub: filtered.length + ' CECOs en vista' },
-                { label: 'Presupuesto total', value: fmtEUR(totalPresupuesto), accent: 'accent-yellow', sub: totalPresupuesto ? '' : 'Sin presupuesto cargado' },
-                { label: '% avance s/presupuesto', value: pctAvance !== null ? fmtPct(pctAvance) : '—', accent: pctAvance !== null && pctAvance >= 1 ? 'accent-green' : '', sub: 'Solo CECOs con presupuesto' },
-                { label: 'CECOs activos', value: activos, accent: 'accent-green', sub: filtered.length + ' totales en filtro' }
-            ];
-
-            document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
-                <div class="kpi ${k.accent}">
-                    <div class="kpi-label">${k.label}</div>
-                    <div class="kpi-value">${k.value}</div>
-                    ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function renderTable(filtered) {
-            document.getElementById('tableCount').textContent = filtered.length + (filtered.length === 1 ? ' proyecto' : ' proyectos');
-            const tbody = document.getElementById('cecoTableBody');
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px;">No hay CECOs que coincidan con los filtros.</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = filtered.map(m => {
-                const real = totalIngresos(m.codigo);
-                const pct = m.presupuestoIngresos > 0 ? Math.min(real / m.presupuestoIngresos, 1) : null;
-                const margen = m.presupuestoIngresos > 0 ? (real - m.presupuestoCostes * (real / m.presupuestoIngresos)) : real;
-                return `
-                <tr>
-                    <td><strong>${escapeHtml(m.codigo)}</strong></td>
-                    <td>${escapeHtml(m.proyecto)}</td>
-                    <td>${escapeHtml(m.cliente)}</td>
-                    <td>${escapeHtml(m.unidad)}</td>
-                    <td><span class="badge ${statusBadgeClass(m.estado)}">${escapeHtml(m.estado)}</span></td>
-                    <td class="num">${m.presupuestoIngresos ? fmtEUR(m.presupuestoIngresos) : '—'}</td>
-                    <td class="num">${fmtEUR(real)}</td>
-                    <td>${pct!==null ? `<span class="bar-track"><span class="bar-fill ${pct>=1?'over':''}" style="width:${Math.round(pct*100)}%"></span></span>${Math.round(pct*100)}%` : '—'}</td>
-                    <td class="num">${fmtEUR(margen)}</td>
-                    <td><button class="row-edit-btn" data-codigo="${escapeHtml(m.codigo)}">Editar</button></td>
-                </tr>`;
-            }).join('');
-
-            tbody.querySelectorAll('.row-edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => openCecoModal(btn.dataset.codigo));
-            });
-        }
-
-        function renderEvolucionChart(filtered) {
-            const codes = new Set(filtered.map(m => m.codigo));
-            const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const realByMonth = MONTHS.map(mes => state.ingresos.filter(i => codes.has(i.codigo) && i.mes === mes).reduce((s, i) => s + i.importe, 0));
-            const totalPresupuesto = filtered.reduce((s, m) => s + m.presupuestoIngresos, 0);
-            const previstoByMonth = MONTHS.map(() => totalPresupuesto / 12);
-
-            const ctx = document.getElementById('chartEvolucion');
-            if (charts.evolucion) charts.evolucion.destroy();
-            charts.evolucion = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: MONTHS,
-                    datasets: [
-                        { label: 'Real', data: realByMonth, borderColor: '#185fa5', backgroundColor: 'rgba(24,95,165,.08)', fill: true, tension: .25, pointRadius: 3, borderWidth: 2 },
-                        { label: 'Previsto', data: previstoByMonth, borderColor: '#f2b705', borderDash: [6, 4], fill: false, tension: .25, pointRadius: 0, borderWidth: 2 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { ticks: { callback: v => fmtEUR(v) }, grid: { color: '#eef1f5' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        const PALETTE = ['#185fa5', '#1baf7a', '#eda100', '#4a3aa7', '#e34948', '#e87ba4', '#eb6834', '#52514e'];
-
-        function renderRepartoChart(filtered) {
-            const sorted = filtered
-                .map(m => ({ label: m.codigo, value: totalIngresos(m.codigo) }))
-                .filter(x => x.value > 0)
-                .sort((a, b) => b.value - a.value);
-            const top = sorted.slice(0, 7);
-            const restoSum = sorted.slice(7).reduce((s, x) => s + x.value, 0);
-            if (restoSum > 0) top.push({ label: 'Otros', value: restoSum });
-
-            const ctx = document.getElementById('chartReparto');
-            if (charts.reparto) charts.reparto.destroy();
-            if (top.length === 0) {
-                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
-                return;
-            }
-            charts.reparto = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: top.map(t => t.label),
-                    datasets: [{ data: top.map(t => t.value), backgroundColor: PALETTE, borderColor: '#fff', borderWidth: 2 }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }
-                }
-            });
-        }
-
-        // ============================================================
-        // 9. MODAL DE EDICIÓN (SIN CAMBIOS)
-        // ============================================================
-        function openCecoModal(codigo) {
-            const m = codigo ? state.maestro.find(x => x.codigo === codigo) : null;
-            const isNew = !m;
-            const data = m || { codigo: '', proyecto: '', cliente: '', unidad: '', responsable: '', estado: 'Activo', presupuestoIngresos: 0, presupuestoCostes: 0, notas: '' };
-
-            const root = document.getElementById('modalRoot');
-            root.innerHTML = `
-            <div class="modal-overlay" id="modalOverlay">
-                <div class="modal">
-                    <h3>${isNew ? 'Nuevo CECO' : 'Editar ' + escapeHtml(data.codigo)}</h3>
-                    <div class="field"><label>Código CECO</label><input id="f_codigo" value="${escapeHtml(data.codigo)}" ${isNew?'':'readonly'}></div>
-                    <div class="field"><label>Nombre del proyecto</label><input id="f_proyecto" value="${escapeHtml(data.proyecto)}"></div>
-                    <div class="field"><label>Cliente</label><input id="f_cliente" value="${escapeHtml(data.cliente)}"></div>
-                    <div class="field"><label>Unidad de negocio</label><input id="f_unidad" value="${escapeHtml(data.unidad)}"></div>
-                    <div class="field"><label>Estado</label>
-                        <select id="f_estado">
-                            <option ${data.estado==='Activo'?'selected':''}>Activo</option>
-                            <option ${data.estado==='En negociación'?'selected':''}>En negociación</option>
-                            <option ${data.estado==='Cerrado'?'selected':''}>Cerrado</option>
-                        </select>
-                    </div>
-                    <div class="field"><label>Presupuesto de ingresos (€)</label><input id="f_presIngresos" type="number" value="${data.presupuestoIngresos||0}"></div>
-                    <div class="field"><label>Presupuesto de costes (€)</label><input id="f_presCostes" type="number" value="${data.presupuestoCostes||0}"></div>
-                    <div class="modal-actions">
-                        ${!isNew ? `<button class="btn-secondary" id="deleteCecoBtn" style="color:#d04848;border-color:#f0c9c9;margin-right:auto;">Eliminar</button>` : ''}
-                        <button class="btn-secondary" id="cancelModal">Cancelar</button>
-                        <button class="btn-save" id="saveCecoBtn">Guardar</button>
-                    </div>
-                </div>
-            </div>`;
-
-            document.getElementById('cancelModal').addEventListener('click', closeModal);
-            document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target.id === 'modalOverlay') closeModal(); });
-            document.getElementById('saveCecoBtn').addEventListener('click', async () => {
-                const newCodigo = document.getElementById('f_codigo').value.trim();
-                if (!newCodigo) { showToast('El código de CECO es obligatorio.'); return; }
-                if (isNew && state.maestro.some(x => x.codigo === newCodigo)) { showToast('Ya existe un CECO con ese código.'); return; }
-
-                const payload = {
-                    codigo: newCodigo,
-                    proyecto: document.getElementById('f_proyecto').value.trim(),
-                    cliente: document.getElementById('f_cliente').value.trim(),
-                    unidad: document.getElementById('f_unidad').value.trim(),
-                    responsable: data.responsable || '',
-                    fechaInicio: data.fechaInicio || '',
-                    fechaFin: data.fechaFin || '',
-                    estado: document.getElementById('f_estado').value,
-                    presupuestoIngresos: Number(document.getElementById('f_presIngresos').value) || 0,
-                    presupuestoCostes: Number(document.getElementById('f_presCostes').value) || 0,
-                    notas: data.notas || ''
-                };
-
-                if (isNew) {
-                    state.maestro.push(payload);
-                } else {
-                    const idx = state.maestro.findIndex(x => x.codigo === codigo);
-                    state.maestro[idx] = payload;
-                }
-                populateFilterOptions();
-                render();
-                closeModal();
-                showToast(isNew ? 'CECO creado (solo en memoria)' : 'Cambios guardados (solo en memoria)');
-            });
-
-            if (!isNew) {
-                document.getElementById('deleteCecoBtn').addEventListener('click', async () => {
-                    state.maestro = state.maestro.filter(x => x.codigo !== codigo);
-                    populateFilterOptions();
-                    render();
-                    closeModal();
-                    showToast('CECO eliminado (solo en memoria)');
-                });
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('modalRoot').innerHTML = '';
-        }
-
-        // ============================================================
-        // 10. INICIALIZACIÓN PRINCIPAL
-        // ============================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando dashboard con OAuth 2.0...');
-
-            // Configurar eventos de filtros
-            document.getElementById('filterCliente').addEventListener('change', render);
-            document.getElementById('filterUnidad').addEventListener('change', render);
-            document.getElementById('filterEstado').addEventListener('change', render);
-            document.getElementById('resetFilters').addEventListener('click', () => {
-                document.getElementById('filterCliente').value = '';
-                document.getElementById('filterUnidad').value = '';
-                document.getElementById('filterEstado').value = '';
-                render();
-            });
-
-            // Configurar botón de login
-            const loginBtn = document.getElementById('loginBtn');
-            loginBtn.addEventListener('click', async () => {
-                loginBtn.disabled = true;
-                loginBtn.textContent = 'Conectando...';
-                try {
-                    await initOAuth();
-                    await authenticateUser();
-                    // Ocultar login, mostrar loading y cargar datos
-                    document.getElementById('loginContainer').style.display = 'none';
-                    await loadAllData();
-                } catch (error) {
-                    console.error('Error en login:', error);
-                    showToast(`❌ ${error.message}`);
-                    loginBtn.textContent = 'Reintentar';
-                    loginBtn.disabled = false;
-                }
-            });
-
-            // Verificar si el usuario ya está autenticado (carga de la biblioteca)
-            // Cargar la biblioteca de Google en segundo plano
-            initOAuth().then(() => {
-                console.log('✅ Biblioteca de Google lista para usar.');
-                // Verificar si ya hay una sesión activa (para autologin)
-                // Nota: Esto requiere que el usuario haya dado permiso previamente
-            }).catch(error => {
-                console.warn('⚠️ Error al cargar biblioteca de Google:', error);
-                updateLoginStatus('⚠️ No se pudo cargar la biblioteca de autenticación. Verifica tu conexión.', true);
-            });
-        });
-
-        console.log('✅ Script OAuth 2.0 cargado correctamente.');
-    </script>
+        const validCodes=new Set(maestro.map(m=>m.codigo));
+        const orphans=[...new Set(ingresos.filter(i=>!validCodes.has(i.codigo)).map(i=>i.codigo))];
+        resolve({maestro,ingresos,ratecard,plantilla,orphans});
+      }catch(err){reject('Error leyendo: '+err.message);}
+    };
+    r.onerror=()=>reject('No se pudo leer el archivo.');
+    r.readAsArrayBuffer(file);
+  });
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render(){
+  try{
+    const f=getFiltered();
+    renderTopbarMeta();renderAlert(f);renderKpis(f);
+    renderEvolucionChart(f);renderWaterfallChart(f);
+    renderMargenCecoChart(f);renderRepartoChart(f);
+    renderCoberturaChart(f);renderHorasResumen();renderTable(f);
+  }catch(err){console.error(err);showToast('Error: '+err.message);}
+}
+
+function renderTopbarMeta(){
+  const meses=monthsElapsedYTD();
+  const per=`YTD Ene–${MONTHS[meses-1]} 2026`;
+  const imp=state.importedAt?`Datos al ${new Date(state.importedAt).toLocaleDateString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}`:'Sin importar';
+  document.getElementById('topbarMeta').innerHTML=`<span>${per}</span><span>${imp}</span>`;
+  document.getElementById('periodLabel').textContent=per;
+  document.getElementById('periodHint').textContent=per;
+}
+
+function renderAlert(f){
+  const alertas=calcAlertas();
+  const el=document.getElementById('kpiAlert');
+  if(alertas.length){el.style.display='block';el.innerHTML=`⚠️ <strong>Capacidad excedida:</strong> ${alertas.join(' · ')}`;}
+  else el.style.display='none';
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+function renderKpis(f){
+  const ing=f.reduce((s,m)=>s+totalIngresos(m.codigo),0);
+  const cos=f.reduce((s,m)=>s+costeCeco(m.codigo),0);
+  const mb=ing-cos;
+  const presup=f.reduce((s,m)=>s+m.presupuestoIngresos,0);
+  const pct=presup>0?ing/presup:null;
+  const mbPct=ing>0?mb/ing:null;
+  const mesesYTD=monthsElapsedYTD();
+  const mesLabel=MONTHS[mesesYTD-1];
+  const mesAntLabel=mesesYTD>=2?MONTHS[mesesYTD-2]:null;
+  const ingMes=f.reduce((s,m)=>s+state.ingresos.filter(i=>i.codigo===m.codigo&&i.mes===mesLabel).reduce((ss,i)=>ss+i.importe,0),0);
+  const ingAnt=mesAntLabel?f.reduce((s,m)=>s+state.ingresos.filter(i=>i.codigo===m.codigo&&i.mes===mesAntLabel).reduce((ss,i)=>ss+i.importe,0),0):0;
+  const deltaIng=ingAnt>0?(ingMes-ingAnt)/ingAnt:null;
+  const totalHoras=f.reduce((s,m)=>s+horasTotalesCeco(m.codigo),0);
+
+  const kpis=[
+    {label:'Ingresos facturados',accent:'',value:fmtEUR(ing),
+      delta:deltaIng,deltaLabel:deltaIng!==null?`${deltaIng>=0?'+':''}${fmtPct(deltaIng)} vs ${mesAntLabel}`:'',
+      deltaClass:deltaIng>=0?'delta-up':'delta-down',sub:`${f.length} CECOs`},
+    {label:'Costes imputados YTD',accent:'accent-yellow',value:fmtEUR(cos),
+      deltaLabel:`${Math.round(totalHoras)}h totales imputadas`,deltaClass:'delta-flat',sub:`${mesesYTD} meses`},
+    {label:'Margen Bruto',accent:mb>=0?'accent-green':'accent-red',value:fmtEUR(mb),
+      deltaLabel:mbPct!==null?`${fmtPct(mbPct)} s/ingresos`:'',deltaClass:mb>=0?'delta-up':'delta-down',sub:''},
+    {label:'Avance s/Presupuesto',accent:pct&&pct>=1?'accent-green':'',value:pct!==null?fmtPct(pct):'—',
+      deltaLabel:'',deltaClass:'delta-flat',sub:presup>0?`de ${fmtEUR(presup)}`:'Sin presupuesto parcial'}
+  ];
+  document.getElementById('kpiGrid').innerHTML=kpis.map(k=>`
+    <div class="kpi ${k.accent}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      ${k.deltaLabel?`<div class="kpi-delta ${k.deltaClass}">${k.deltaLabel}</div>`:''}
+      ${k.sub?`<div class="kpi-sub">${k.sub}</div>`:''}
+    </div>`).join('');
+}
+
+// ── GRÁFICOS ──────────────────────────────────────────────────
+const PALETTE=['#185fa5','#1baf7a','#eda100','#4a3aa7','#e34948','#e87ba4','#eb6834','#52514e','#0099cc','#6daf44'];
+const TTP={backgroundColor:'rgba(12,37,71,.93)',titleColor:'#fff',bodyColor:'#b9c6dc',padding:11,cornerRadius:8};
+
+function renderEvolucionChart(f){
+  const codes=new Set(f.map(m=>m.codigo));
+  const mesesYTD=monthsElapsedYTD();
+  const real=MONTHS.map(mes=>state.ingresos.filter(i=>codes.has(i.codigo)&&i.mes===mes).reduce((s,i)=>s+i.importe,0));
+  const presup=f.reduce((s,m)=>s+m.presupuestoIngresos,0);
+  const prev=MONTHS.map(()=>presup>0?presup/12:null);
+  // Costes mensuales reales por mes
+  const costeByMes=MONTHS.map((mes,i)=>{
+    if(i>=mesesYTD)return null;
+    const mData=state.horas[mes]||{};
+    let c=0;
+    f.forEach(m=>{const cd=mData[m.codigo]||{};PERFILES.forEach(p=>{c+=Number(cd[p.key]||0)*tarifaHora(p.key);});});
+    return c;
+  });
+  const ctx=document.getElementById('chartEvolucion');
+  if(charts.evolucion)charts.evolucion.destroy();
+  charts.evolucion=new Chart(ctx,{
+    type:'bar',
+    data:{labels:MONTHS,datasets:[
+      {label:'Ingresos reales',data:real,backgroundColor:MONTHS.map((_,i)=>i<mesesYTD?'rgba(24,95,165,.78)':'rgba(24,95,165,.18)'),borderRadius:4,order:2},
+      {label:'Costes imputados',data:costeByMes,backgroundColor:'rgba(227,73,72,.6)',borderRadius:4,order:3},
+      {label:'Previsto',data:prev,type:'line',borderColor:'#f2b705',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false,tension:0,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmtEUR(ctx.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtEUR(v),font:{size:10}},grid:{color:'#eef1f5'},beginAtZero:true},x:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+}
+
+const waterfallLabels={id:'wfl',afterDatasetsDraw(chart){
+  const{ctx:c,data}=chart;const ds=data.datasets[1];if(!ds)return;
+  ds.data.forEach((val,i)=>{if(val==null)return;const meta=chart.getDatasetMeta(1);const bar=meta.data[i];if(!bar)return;
+    c.save();c.font='bold 12px -apple-system,sans-serif';c.fillStyle='#16233a';c.textAlign='center';c.textBaseline='bottom';c.fillText(fmtEUR(val),bar.x,bar.y-5);c.restore();});
+}};
+
+function renderWaterfallChart(f){
+  const ing=f.reduce((s,m)=>s+totalIngresos(m.codigo),0);
+  const cos=f.reduce((s,m)=>s+costeCeco(m.codigo),0);
+  const mb=ing-cos;
+  const ctx=document.getElementById('chartWaterfall');
+  if(charts.waterfall)charts.waterfall.destroy();
+  charts.waterfall=new Chart(ctx,{type:'bar',
+    data:{labels:['Ingresos','Costes','Margen'],datasets:[
+      {label:'base',data:[0,mb,0],backgroundColor:'transparent',stack:'w'},
+      {label:'valor',data:[ing,cos,mb],backgroundColor:['rgba(24,95,165,.82)','rgba(227,73,72,.75)',mb>=0?'rgba(29,158,117,.82)':'rgba(227,73,72,.82)'],borderRadius:6,stack:'w'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP,filter:i=>i.datasetIndex===1,callbacks:{label:ctx=>` ${fmtEUR(ctx.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmtEUR(v),font:{size:10}},grid:{color:'#eef1f5'},beginAtZero:true},x:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}},
+    plugins:[waterfallLabels]
+  });
+}
+
+function renderMargenCecoChart(f){
+  const data=f.map(m=>({label:m.codigo,proyecto:m.proyecto||m.codigo,margen:totalIngresos(m.codigo)-costeCeco(m.codigo)})).sort((a,b)=>b.margen-a.margen);
+  const ctx=document.getElementById('chartMargenCeco');
+  if(charts.margenCeco)charts.margenCeco.destroy();
+  if(!data.length)return;
+  charts.margenCeco=new Chart(ctx,{type:'bar',
+    data:{labels:data.map(d=>d.label),datasets:[{label:'Margen',data:data.map(d=>d.margen),backgroundColor:data.map(d=>d.margen>=0?'rgba(29,158,117,.75)':'rgba(227,73,72,.75)'),borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP,callbacks:{title:i=>data[i[0].dataIndex].proyecto,label:ctx=>' Margen: '+fmtEUR(ctx.raw)}}},
+      scales:{x:{ticks:{callback:v=>fmtEUR(v),font:{size:10}},grid:{color:'#eef1f5'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderRepartoChart(f){
+  const sorted=f.map(m=>({label:m.codigo,value:totalIngresos(m.codigo)})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value);
+  const top=sorted.slice(0,8);const resto=sorted.slice(8).reduce((s,x)=>s+x.value,0);
+  if(resto>0)top.push({label:'Otros',value:resto});
+  const total=top.reduce((s,x)=>s+x.value,0);
+  const ctx=document.getElementById('chartReparto');
+  if(charts.reparto)charts.reparto.destroy();if(!top.length)return;
+  charts.reparto=new Chart(ctx,{type:'doughnut',
+    data:{labels:top.map(t=>t.label),datasets:[{data:top.map(t=>t.value),backgroundColor:PALETTE,borderColor:'#fff',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:10.5},padding:7,generateLabels:chart=>chart.data.labels.map((l,i)=>({text:`${l}  ${fmtPct((chart.data.datasets[0].data[i]||0)/total)}`,fillStyle:PALETTE[i%PALETTE.length],hidden:false,index:i}))}},
+        tooltip:{...TTP,callbacks:{label:ctx=>` ${fmtEUR(ctx.raw)} · ${fmtPct(ctx.raw/total)}`}}}},
+    plugins:[{id:'ctr',afterDraw(chart){const{ctx:c,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;c.save();c.font='bold 14px -apple-system,sans-serif';c.fillStyle='#0c2547';c.textAlign='center';c.textBaseline='middle';c.fillText(fmtEUR(total),cx,cy-8);c.font='10.5px -apple-system,sans-serif';c.fillStyle='#8993a3';c.fillText('total facturado',cx,cy+10);c.restore();}}]
+  });
+}
+
+function renderCoberturaChart(f){
+  const rows=f.filter(m=>m.presupuestoIngresos>0).map(m=>({codigo:m.codigo,cliente:m.cliente,real:totalIngresos(m.codigo),presup:m.presupuestoIngresos,pct:totalIngresos(m.codigo)/m.presupuestoIngresos})).sort((a,b)=>b.pct-a.pct);
+  const el=document.getElementById('chartCobertura');
+  if(!rows.length){el.innerHTML='<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0">Ningún CECO tiene presupuesto definido.</p>';return;}
+  el.innerHTML=rows.map(d=>{const w=Math.min(d.pct*100,100);const col=d.pct>=1?'var(--green)':d.pct>=0.7?'var(--blue)':'var(--amber)';
+    return`<div class="prog-row"><div class="prog-meta"><div><span class="prog-code">${esc(d.codigo)}</span><span class="prog-client">${esc(d.cliente)}</span></div><div><span class="prog-pct" style="color:${col}">${Math.round(d.pct*100)}%</span><span class="prog-amounts">${fmtEUR(d.real)} / ${fmtEUR(d.presup)}</span></div></div><div class="prog-track"><div class="prog-fill" style="width:${w}%;background:${col}"></div></div></div>`;
+  }).join('');
+}
+
+// ── PANEL DE HORAS ─────────────────────────────────────────────
+let mesActivo=MONTHS[monthsElapsedYTD()-1];
+
+function renderHorasResumen(){
+  const mesesYTD=monthsElapsedYTD();
+  const totalH=state.maestro.reduce((s,m)=>s+horasTotalesCeco(m.codigo),0);
+  const totalC=state.maestro.reduce((s,m)=>s+costeCeco(m.codigo),0);
+  document.getElementById('horasResumen').textContent=`${Math.round(totalH)}h imputadas · ${fmtEUR(totalC)} coste total`;
+}
+
+function renderHorasPanel(){
+  const perfilesActivos=PERFILES.filter(p=>Number(state.ratecard[p.costKey]||0)>0||Number(state.plantilla[p.ftesKey]||0)>0);
+  if(!perfilesActivos.length){
+    document.getElementById('horasPanelBody').innerHTML='<p style="color:var(--text-muted);font-size:13px">Importa el Excel con la hoja RateCard para activar este panel.</p>';
+    return;
+  }
+  const mesesYTD=monthsElapsedYTD();
+  const mes=mesActivo;
+  const mData=state.horas[mes]||{};
+
+  // TABS de meses
+  const tabs=MONTHS.slice(0,mesesYTD).map(m=>{
+    const hasData=Object.values(state.horas[m]||{}).some(c=>PERFILES.some(p=>Number(c[p.key]||0)>0));
+    return`<button class="horas-tab ${m===mes?'active':''} ${hasData?'has-data':''}" data-mes="${m}">${m}</button>`;
+  }).join('');
+
+  // Tabla: filas=CECOs, cols=perfiles
+  const perfilHeaders=perfilesActivos.map(p=>`<th class="perfil-header num">${p.label}<br><span style="font-weight:400;font-size:10px">${fmtEUR(p.costKey?state.ratecard[p.costKey]:0)}/h</span></th>`).join('');
+  const perfilTotHeaders=perfilesActivos.map(p=>`<th class="num perfil-header" style="opacity:.7">Subtotal</th>`).join('');
+
+  const filas=state.maestro.map(m=>{
+    const cData=mData[m.codigo]||{};
+    const celdasH=perfilesActivos.map(p=>{
+      const h=Number(cData[p.key]||0);
+      const cap=capacidadMesPerfil(p.key);
+      const usadoPerfil=horasMesPerfil(mes,p.key);
+      const over=cap>0&&usadoPerfil>cap;
+      return`<td class="num"><input type="number" min="0" step="0.5" value="${h||''}" placeholder="0"
+        class="horas-input ${over?'over-cap':''}"
+        data-mes="${mes}" data-codigo="${esc(m.codigo)}" data-perfil="${p.key}"></td>`;
+    }).join('');
+    const costeTotal=perfilesActivos.reduce((s,p)=>s+(Number(cData[p.key]||0)*tarifaHora(p.key)),0);
+    return`<tr>
+      <td class="ceco-cell">${esc(m.codigo)}<br><span style="font-size:10.5px;color:var(--text-muted);font-weight:400">${esc(m.cliente)}</span></td>
+      ${celdasH}
+      <td class="num coste-cell">${costeTotal>0?fmtEUR(costeTotal):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Fila de totales del mes con barra de capacidad
+  const totalRow=perfilesActivos.map(p=>{
+    const usado=horasMesPerfil(mes,p.key);
+    const cap=capacidadMesPerfil(p.key);
+    const pct=cap>0?Math.min(usado/cap,1):0;
+    const col=usado>cap?'var(--red)':usado/cap>0.8?'var(--amber)':'var(--green)';
+    return`<td class="num" style="font-size:12px">
+      <div style="font-weight:700;color:${col}">${Math.round(usado)}h</div>
+      ${cap>0?`<div style="font-size:10px;color:var(--text-muted)">/ ${Math.round(cap)}h cap</div>
+      <div class="cap-bar-track" style="margin-top:3px"><div class="cap-bar-fill" style="width:${Math.round(pct*100)}%;background:${col}"></div></div>`:''}
+    </td>`;
+  }).join('');
+  const totalCostesMes=state.maestro.reduce((s,m)=>{const cd=mData[m.codigo]||{};return s+perfilesActivos.reduce((ss,p)=>ss+(Number(cd[p.key]||0)*tarifaHora(p.key)),0);},0);
+
+  // Config de plantilla
+  const fteInputs=perfilesActivos.map(p=>`
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span style="color:var(--text-muted)">${p.label}:</span>
+      <input type="number" min="0" value="${state.plantilla[p.ftesKey]||0}"
+        data-ftes="${p.ftesKey}"
+        style="width:48px;padding:4px 6px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;text-align:center">
+      <span style="color:var(--text-muted)">FTEs</span>
+    </div>`).join('');
+
+  document.getElementById('horasPanelBody').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;margin-bottom:6px">Mes a imputar</div>
+        <div class="horas-tabs">${tabs}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;margin-bottom:6px">Pool de personas</div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap">${fteInputs}</div>
+        </div>
+        <button class="btn-save" id="horasSaveBtn" style="align-self:flex-end">Guardar horas</button>
+      </div>
+    </div>
+
+    <div class="horas-grid">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:130px">CECO</th>
+            ${perfilHeaders}
+            <th class="num" style="font-size:10.5px">Coste ${mes}</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+        <tfoot>
+          <tr class="horas-total-row">
+            <td>TOTAL ${mes}</td>
+            ${totalRow}
+            <td class="num coste-cell" style="font-style:normal;font-weight:700">${fmtEUR(totalCostesMes)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div style="margin-top:12px;font-size:11.5px;color:var(--text-muted)">
+      Las barras de capacidad muestran el % de horas disponibles consumidas. Ámbar &gt;80%, rojo = excedido.
+    </div>
+  `;
+
+  // Tabs click
+  document.querySelectorAll('.horas-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{mesActivo=tab.dataset.mes;renderHorasPanel();});
+  });
+
+  // Guardar
+  document.getElementById('horasSaveBtn').addEventListener('click',async()=>{
+    // Recoger FTEs
+    document.querySelectorAll('[data-ftes]').forEach(inp=>{
+      state.plantilla[inp.dataset.ftes]=Number(inp.value)||0;
+    });
+    // Recoger horas
+    document.querySelectorAll('.horas-input').forEach(inp=>{
+      const{mes,codigo,perfil}=inp.dataset;
+      if(!state.horas[mes])state.horas[mes]={};
+      if(!state.horas[mes][codigo])state.horas[mes][codigo]={};
+      state.horas[mes][codigo][perfil]=Number(inp.value)||0;
+    });
+    await saveState();
+    render();
+    renderHorasPanel();
+    showToast(`Horas de ${mesActivo} guardadas`);
+  });
+}
+
+// Acordeón del panel de horas
+document.getElementById('horasToggle').addEventListener('click',()=>{
+  const body=document.getElementById('horasPanelBody');
+  const hdr=document.getElementById('horasToggle');
+  const collapsed=body.classList.toggle('hidden');
+  hdr.querySelector('.ci').style.transform=collapsed?'rotate(-90deg)':'rotate(0deg)';
+  if(!collapsed)renderHorasPanel();
+});
+
+// ── TABLA CON SORT Y TOTALES ──────────────────────────────────
+function getSortedRows(f){
+  const rows=f.map(m=>({m,codigo:m.codigo,proyecto:m.proyecto,cliente:m.cliente,unidad:m.unidad,estado:m.estado,presupuesto:m.presupuestoIngresos,ingresos:totalIngresos(m.codigo),coste:costeCeco(m.codigo),margen:totalIngresos(m.codigo)-costeCeco(m.codigo),horas:horasTotalesCeco(m.codigo)}));
+  const{col,dir}=sortState;
+  rows.sort((a,b)=>{const va=a[col]??'',vb=b[col]??'';const cmp=typeof va==='number'?va-vb:String(va).localeCompare(String(vb),'es');return dir==='asc'?cmp:-cmp;});
+  return rows;
+}
+
+function renderTable(f){
+  document.getElementById('tableCount').textContent=f.length+(f.length===1?' proyecto':' proyectos');
+  document.querySelectorAll('#cecoTable thead th[data-col]').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.dataset.col===sortState.col)th.classList.add(sortState.dir==='asc'?'sort-asc':'sort-desc');
+  });
+  const rows=getSortedRows(f);
+  if(!rows.length){document.getElementById('cecoTableBody').innerHTML=`<tr><td colspan="12" style="text-align:center;color:var(--text-muted);padding:28px">Sin CECOs para los filtros.</td></tr>`;document.getElementById('cecoTableFoot').innerHTML='';return;}
+  document.getElementById('cecoTableBody').innerHTML=rows.map(({m,ingresos,coste,margen,horas})=>{
+    const pct=m.presupuestoIngresos>0?Math.min(ingresos/m.presupuestoIngresos,1):null;
+    return`<tr>
+      <td><strong>${esc(m.codigo)}</strong></td><td>${esc(m.proyecto)}</td><td>${esc(m.cliente)}</td><td>${esc(m.unidad)}</td>
+      <td><span class="badge ${statusBadgeClass(m.estado)}">${esc(m.estado)}</span></td>
+      <td class="num">${m.presupuestoIngresos?fmtEUR(m.presupuestoIngresos):'—'}</td>
+      <td class="num">${fmtEUR(ingresos)}</td>
+      <td class="num" style="font-size:12px;color:var(--text-secondary)">${horas>0?Math.round(horas)+'h':'—'}</td>
+      <td class="num">${coste>0?fmtEUR(coste):'—'}</td>
+      <td class="num" style="color:${margen>=0?'var(--green)':'var(--red)'};font-weight:700">${fmtEUR(margen)}</td>
+      <td>${pct!==null?`<span class="bar-track"><span class="bar-fill ${pct>=1?'over':''}" style="width:${Math.round(pct*100)}%"></span></span>${Math.round(pct*100)}%`:'—'}</td>
+      <td><button class="row-edit-btn" data-codigo="${esc(m.codigo)}">Editar</button></td>
+    </tr>`;
+  }).join('');
+  const totIng=rows.reduce((s,r)=>s+r.ingresos,0);const totCos=rows.reduce((s,r)=>s+r.coste,0);
+  const totMB=totIng-totCos;const totH=rows.reduce((s,r)=>s+r.horas,0);const totP=rows.reduce((s,r)=>s+r.presupuesto,0);
+  document.getElementById('cecoTableFoot').innerHTML=`<tr>
+    <td colspan="5">TOTAL · ${rows.length} CECOs</td>
+    <td class="num">${totP?fmtEUR(totP):'—'}</td><td class="num">${fmtEUR(totIng)}</td>
+    <td class="num" style="font-size:12px;color:var(--text-secondary)">${totH>0?Math.round(totH)+'h':'—'}</td>
+    <td class="num">${totCos>0?fmtEUR(totCos):'—'}</td>
+    <td class="num" style="color:${totMB>=0?'var(--green)':'var(--red)'}">${fmtEUR(totMB)}</td>
+    <td colspan="2"></td>
+  </tr>`;
+  document.querySelectorAll('.row-edit-btn').forEach(btn=>btn.addEventListener('click',()=>openCecoModal(btn.dataset.codigo)));
+}
+
+document.querySelectorAll('#cecoTable thead th[data-col]').forEach(th=>{
+  th.classList.add('sortable');
+  th.addEventListener('click',()=>{const col=th.dataset.col;if(sortState.col===col)sortState.dir=sortState.dir==='asc'?'desc':'asc';else{sortState.col=col;sortState.dir='desc';}renderTable(getFiltered());});
+});
+
+// ── EXPORTAR CSV ──────────────────────────────────────────────
+document.getElementById('exportCsvBtn').addEventListener('click',()=>{
+  const f=getFiltered();const rows=getSortedRows(f);
+  const lines=[['Código','Proyecto','Cliente','Unidad','Estado','Presupuesto','Ingresos','Horas YTD','Coste YTD','Margen Bruto'].join(';')];
+  rows.forEach(({m,ingresos,coste,margen,horas})=>lines.push([m.codigo,m.proyecto,m.cliente,m.unidad,m.estado,m.presupuestoIngresos,ingresos,Math.round(horas),coste,margen].join(';')));
+  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`CECOs_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+});
+
+// ── MODAL CECO ────────────────────────────────────────────────
+function openCecoModal(codigo){
+  const m=codigo?state.maestro.find(x=>x.codigo===codigo):null;const isNew=!m;
+  const d=m||{codigo:'',proyecto:'',cliente:'',unidad:'',estado:'Activo',presupuestoIngresos:0,presupuestoCostes:0};
+  document.getElementById('modalRoot').innerHTML=`<div class="modal-overlay" id="mo">
+    <div class="modal"><h3>${isNew?'Nuevo CECO':'Editar '+esc(d.codigo)}</h3>
+      <div class="field"><label>Código CECO</label><input id="f_c" value="${esc(d.codigo)}" ${isNew?'':'readonly'}></div>
+      <div class="field"><label>Nombre del proyecto</label><input id="f_p" value="${esc(d.proyecto)}"></div>
+      <div class="field"><label>Cliente</label><input id="f_cl" value="${esc(d.cliente)}"></div>
+      <div class="field"><label>Unidad</label><input id="f_u" value="${esc(d.unidad)}"></div>
+      <div class="field"><label>Estado</label><select id="f_e">
+        <option ${d.estado==='Activo'?'selected':''}>Activo</option>
+        <option ${d.estado==='En negociación'?'selected':''}>En negociación</option>
+        <option ${d.estado==='Cerrado'?'selected':''}>Cerrado</option>
+      </select></div>
+      <div class="field"><label>Presupuesto ingresos (€)</label><input id="f_pi" type="number" value="${d.presupuestoIngresos||0}"></div>
+      <div class="field"><label>Presupuesto costes (€)</label><input id="f_pc" type="number" value="${d.presupuestoCostes||0}"></div>
+      <div class="modal-actions">
+        ${!isNew?`<button class="btn-secondary" id="delBtn" style="color:var(--red);border-color:#f0c9c9;margin-right:auto">Eliminar</button>`:''}
+        <button class="btn-secondary" id="cancelBtn">Cancelar</button>
+        <button class="btn-save" id="saveBtn">Guardar</button>
+      </div>
+    </div></div>`;
+  const closeModal=()=>document.getElementById('modalRoot').innerHTML='';
+  document.getElementById('cancelBtn').addEventListener('click',closeModal);
+  document.getElementById('mo').addEventListener('click',e=>{if(e.target.id==='mo')closeModal();});
+  document.getElementById('saveBtn').addEventListener('click',async()=>{
+    const nc=document.getElementById('f_c').value.trim();
+    if(!nc){showToast('Código obligatorio');return;}
+    if(isNew&&state.maestro.some(x=>x.codigo===nc)){showToast('Código ya existe');return;}
+    const payload={codigo:nc,proyecto:document.getElementById('f_p').value.trim(),cliente:document.getElementById('f_cl').value.trim(),unidad:document.getElementById('f_u').value.trim(),responsable:d.responsable||'',fechaInicio:d.fechaInicio||'',fechaFin:d.fechaFin||'',estado:document.getElementById('f_e').value,presupuestoIngresos:Number(document.getElementById('f_pi').value)||0,presupuestoCostes:Number(document.getElementById('f_pc').value)||0,notas:d.notas||''};
+    if(isNew)state.maestro.push(payload);else{const i=state.maestro.findIndex(x=>x.codigo===codigo);state.maestro[i]=payload;}
+    await saveState();populateFilters();render();closeModal();showToast(isNew?'CECO creado':'Guardado');
+  });
+  if(!isNew)document.getElementById('delBtn').addEventListener('click',async()=>{state.maestro=state.maestro.filter(x=>x.codigo!==codigo);await saveState();populateFilters();render();closeModal();showToast('CECO eliminado');});
+}
+
+// ── IMPORT ────────────────────────────────────────────────────
+async function handleFile(file){
+  try{
+    const{maestro,ingresos,ratecard,plantilla,orphans}=await parseExcel(file);
+    state.maestro=maestro;state.ingresos=ingresos;
+    if(ratecard&&(ratecard.analystCostHour||ratecard.seniorCostHour)){state.ratecard=ratecard;}
+    if(plantilla)state.plantilla=Object.assign(state.plantilla,plantilla);
+    state.importedAt=new Date().toISOString();
+    await saveState();populateFilters();showMainContent();render();
+    if(orphans.length)showToast(`Importado. Códigos sin Maestro: ${orphans.join(', ')}`,4500);
+    else showToast('Excel importado');
+  }catch(err){showToast(typeof err==='string'?err:'Error importando');}
+}
+
+document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
+document.getElementById('dropzoneBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+const dz=document.getElementById('emptyState');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+document.getElementById('addCecoBtn').addEventListener('click',()=>openCecoModal(null));
+['filterCliente','filterUnidad','filterEstado'].forEach(id=>document.getElementById(id).addEventListener('change',render));
+document.getElementById('resetFilters').addEventListener('click',()=>{['filterCliente','filterUnidad','filterEstado'].forEach(id=>document.getElementById(id).value='');render();});
+
+function showMainContent(){document.getElementById('emptyState').style.display='none';document.getElementById('mainContent').style.display='block';}
+function showEmptyState(){document.getElementById('emptyState').style.display='block';document.getElementById('mainContent').style.display='none';}
+
+(async()=>{const ok=await loadState();if(ok&&state.maestro&&state.maestro.length){populateFilters();showMainContent();render();}else showEmptyState();})();
+</script>
 </body>
 </html>
